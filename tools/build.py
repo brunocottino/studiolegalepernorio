@@ -837,6 +837,7 @@ def main():
     # Redirect e header Netlify
     shutil.copy(os.path.join(ROOT, "netlify", "_redirects"), os.path.join(DIST, "_redirects"))
     shutil.copy(os.path.join(ROOT, "netlify", "_headers"), os.path.join(DIST, "_headers"))
+    shutil.copy(os.path.join(ROOT, "netlify", "netlify.toml"), os.path.join(DIST, "netlify.toml"))
 
     print(f"Build completato: {len(tutte)} pagine ({len(nuove)} nuove), {len(urls)} URL in sitemap -> {DIST}")
 
