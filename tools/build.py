@@ -17,6 +17,7 @@ from datetime import date
 
 sys.path.insert(0, os.path.dirname(__file__))
 import contenuti as C  # noqa: E402
+import guide_nuove as G  # noqa: E402
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SRC = os.path.join(ROOT, "src")
@@ -25,6 +26,10 @@ DIST = os.path.join(ROOT, "dist")
 BASE = "https://studiolegalepernorio.com"
 OGGI = date.today().isoformat()
 WA = "https://wa.me/393333368757?text=Buongiorno%20Avvocato%2C%20vorrei%20fissare%20un%20appuntamento."
+
+INSTAGRAM = "https://www.instagram.com/studiolegalepernorio/"
+ORARI_TXT = "Lun – Ven 9:00 – 19:00, su appuntamento"
+ICO_IG = '<svg class="ico" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1"/></svg>'
 
 FONT_PRELOAD = (
     '<link rel="preload" href="/fonts/inter-56724408-latin.woff2" as="font" type="font/woff2" crossorigin>'
@@ -212,7 +217,6 @@ def pagine_comuni():
             "<ol><li><strong>Contatto</strong>: per telefono, WhatsApp o con il modulo, indicando brevemente la questione.</li>"
             "<li><strong>Primo colloquio</strong> in Studio, con i documenti: l'avvocato spiega le strade possibili, i tempi e i rischi.</li>"
             "<li><strong>Preventivo scritto</strong> prima di iniziare. Nessuna sorpresa: <a href='/costi-avvocato'>come si forma il costo</a>.</li></ol>"
-            f"<p>Chi ha un reddito basso può chiedere il <a href='/gratuito-patrocinio'>gratuito patrocinio</a>, cioè l'assistenza a spese dello Stato.</p>"
             f'<p class="note-s">Studio Legale Pernorio, Avv. Daniela Pernorio, Via Egidio Sacchetti 14, 27029 Vigevano (PV). Aggiornato a {C.AGGIORNATO}.</p>'
             "</article>" + faq_html(c["faq"])
         )
@@ -442,6 +446,66 @@ def tool_ld(t):
     }
 
 
+def pagine_guide():
+    out = {}
+    for i, g in enumerate(G.GUIDE):
+        url = clean_url(g["slug"])
+        corpo = g["corpo"] + f'<p class="note-s">A cura dello Studio Legale Pernorio, <a href=\'/studio\'>Avv. Daniela Pernorio</a>, Vigevano. Aggiornato a {C.AGGIORNATO}. Informazioni generali: non sostituiscono un parere sul caso concreto.</p>'
+        body = '<article class="card panel article rv">' + corpo + "</article>" + faq_html(g["faq"])
+        altre = [x for x in G.GUIDE if x["slug"] != g["slug"] and x["cat"] == g["cat"]]
+        altre += [x for x in G.GUIDE if x["slug"] != g["slug"] and x not in altre]
+        chips = "".join(f"<a class='chip' href='/{x['slug']}'>{esc(x['titolo'])}</a>" for x in altre[:5])
+        extra = ""
+        tool = {"guida-costo-separazione-consensuale": 2, "guida-casa-familiare-separazione": 2, "guida-divorzio-tempi": 2,
+                "guida-eredita-con-debiti": 0, "guida-testamento-olografo": 0}.get(g["slug"])
+        if tool is not None:
+            extra += strumenti_card(tool)
+        extra += f'<div class="card panel rv"><span class="label">Altre guide</span><div class="chips" style="margin-top:14px">{chips}</div></div>'
+        art = {
+            "@context": "https://schema.org", "@type": "Article", "headline": g["titolo"], "description": g["sommario"],
+            "inLanguage": "it-IT", "datePublished": OGGI, "dateModified": OGGI, "mainEntityOfPage": url,
+            "image": BASE + "/img/og.jpg", "author": {"@id": BASE + "/#avvocato"}, "publisher": {"@id": BASE + "/#studio"},
+            "articleSection": g["cat"],
+        }
+        crumbs = [("Home", BASE + "/"), ("Guide", clean_url("guide")), (g["cat"], None)]
+        title = g["titolo"] + " · Avv. Daniela Pernorio, Vigevano"
+        if len(title) > 70:
+            title = g["titolo"] + " · Studio Pernorio"
+        out[g["slug"]] = pagina(g["slug"], title, g["sommario"], crumbs, f"Guida · {g['cat']} · {g['min']} min di lettura",
+                                g["titolo"], g["sommario"], body, aside_std(g["materia"], extra=extra), extra_ld=[faq_ld(g["faq"]), art])
+    return out
+
+
+def fix_indice_guide(s):
+    cards = "".join(
+        f"<a class='card glink' href='/{g['slug']}'><span class=\"label\">{esc(g['cat'])}</span><b>{esc(g['titolo'])}</b><span>{esc(g['sommario'])}</span></a>"
+        for g in G.GUIDE
+    )
+    s = s.replace('<div class="glist rv">', '<div class="glist rv">' + cards, 1)
+    s = s.replace("Informazioni generali, aggiornate a ottobre 2026.", f"Informazioni generali, aggiornate a {C.AGGIORNATO}.")
+    return s
+
+
+def fix_studio(s):
+    s = s.replace("L'Avv. Daniela Pernorio è avvocato civilista, iscritta all'Ordine degli Avvocati di Pavia.",
+                  "L'Avv. Daniela Pernorio è avvocato civilista, iscritta all'Ordine degli Avvocati di Pavia dal gennaio 2014.", 1)
+    return s
+
+
+def fix_orari_social(s):
+    s = s.replace("Lun – Ven, su appuntamento", ORARI_TXT)
+    s = s.replace("Via Egidio Sacchetti 14, Vigevano · Su appuntamento", "Via Egidio Sacchetti 14, Vigevano · Lun – Ven 9 – 19, su appuntamento")
+    s = s.replace("Lo Studio riceve su appuntamento, dal lunedì al venerdì.", "Lo Studio riceve su appuntamento, dal lunedì al venerdì dalle 9:00 alle 19:00.")
+    s = s.replace("Primo colloquio in Studio, dal lunedì al venerdì.", "Primo colloquio in Studio, dal lunedì al venerdì dalle 9 alle 19.")
+    s = s.replace("<p style=\"margin-top:22px\">Avv. Daniela Pernorio<br>Ordine degli Avvocati di Pavia</p>",
+                  "<p style=\"margin-top:22px\">Avv. Daniela Pernorio<br>Ordine degli Avvocati di Pavia dal 2014</p>")
+    ig = f'<li><a href="{INSTAGRAM}" target="_blank" rel="noopener">Instagram · @studiolegalepernorio</a></li>'
+    if INSTAGRAM not in s:
+        s = s.replace('<li style="overflow-wrap:anywhere"><a href="mailto:daniela.pernorio@gmail.com">daniela.pernorio@gmail.com</a></li></ul>',
+                      '<li style="overflow-wrap:anywhere"><a href="mailto:daniela.pernorio@gmail.com">daniela.pernorio@gmail.com</a></li>' + ig + "</ul>", 1)
+    return s
+
+
 # ---------------------------------------------------------------------------
 # Correzioni applicate a tutte le pagine
 # ---------------------------------------------------------------------------
@@ -466,11 +530,12 @@ def fix_ld(s):
                 it["url"] = BASE + "/"
                 it.setdefault("logo", BASE + "/img/icon-512.png")
                 it["image"] = [BASE + "/img/og.jpg", BASE + "/img/ingresso.webp", BASE + "/img/studio-vetrata.webp"]
-                it.setdefault("openingHoursSpecification", [{
+                it["openingHoursSpecification"] = [{
                     "@type": "OpeningHoursSpecification",
                     "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
-                    "description": "Su appuntamento",
-                }])
+                    "opens": "09:00", "closes": "19:00",
+                }]
+                it["sameAs"] = list(dict.fromkeys((it.get("sameAs") or []) + [INSTAGRAM]))
                 it.setdefault("hasOfferCatalog", {
                     "@type": "OfferCatalog", "name": "Aree di attività",
                     "itemListElement": [
@@ -484,6 +549,15 @@ def fix_ld(s):
                     f.setdefault("url", clean_url("studio"))
                     f.setdefault("image", BASE + "/img/ritratto-viso.webp")
                     f.setdefault("worksFor", {"@id": BASE + "/#studio"})
+                    f["hasCredential"] = {"@type": "EducationalOccupationalCredential", "credentialCategory": "Iscrizione all'Albo degli Avvocati",
+                                          "recognizedBy": {"@type": "Organization", "name": "Ordine degli Avvocati di Pavia"}, "dateCreated": "2014-01"}
+            elif t == "ProfilePage" and isinstance(it.get("mainEntity"), dict):
+                pe = it["mainEntity"]
+                pe["@id"] = BASE + "/#avvocato"
+                pe["sameAs"] = [INSTAGRAM]
+                pe["hasCredential"] = {"@type": "EducationalOccupationalCredential", "credentialCategory": "Iscrizione all'Albo degli Avvocati",
+                                       "recognizedBy": {"@type": "Organization", "name": "Ordine degli Avvocati di Pavia"}, "dateCreated": "2014-01"}
+                pe["worksFor"] = {"@id": BASE + "/#studio"}
             elif t == "WebSite":
                 it["@id"] = BASE + "/#sito"
                 it["publisher"] = {"@id": BASE + "/#studio"}
@@ -533,7 +607,7 @@ def fix_nav(s):
 
 
 def fix_footer(s):
-    extra = "<li><a href='/strumenti'>Strumenti gratuiti</a></li><li><a href='/costi-avvocato'>Costi e preventivo</a></li><li><a href='/gratuito-patrocinio'>Gratuito patrocinio</a></li>"
+    extra = "<li><a href='/strumenti'>Strumenti gratuiti</a></li><li><a href='/costi-avvocato'>Costi e preventivo</a></li>"
     s = s.replace("<li><a href='/domande'>Domande frequenti</a></li>", "<li><a href='/domande'>Domande frequenti</a></li>" + extra, 1)
     zone = " · ".join(f"<a href='/{c['slug']}'>{esc(c['nome'])}</a>" for c in C.COMUNI)
     blocco = f'<div class="fzones"><span>Dove operiamo:</span> <a href=\'/\'>Vigevano</a> · {zone} · <a href=\'/{C.LOMELLINA["slug"]}\'>Lomellina</a></div>\n'
@@ -563,7 +637,6 @@ def fix_pratica(s, key):
         '<li><span><b>Preventivo scritto</b> prima di iniziare. <a href="/costi-avvocato">Come si forma il costo</a>.</span></li>'
         "<li><span><b>Un solo avvocato</b> segue la pratica dall'inizio alla fine, con aggiornamenti scritti a ogni passaggio.</span></li>"
         '<li><span><b>Accordo prima della causa</b>, quando è possibile: <a href="/attivita-negoziazione-assistita">negoziazione assistita</a> e <a href="/attivita-mediazione-civile">mediazione</a>.</span></li></ul>'
-        '<p style="margin-top:14px">Con un reddito basso si può chiedere il <a href="/gratuito-patrocinio">gratuito patrocinio</a>.</p>'
         f'<h3 style="margin-top:22px">Per chi vive in Lomellina e nell\'Abbiatense</h3><div class="chips" style="margin-top:12px">{chips}</div></div>\n'
     )
     if key == "separazione-divorzio":
@@ -610,7 +683,7 @@ def fix_home(s):
         '<section><div class="wrap"><div class="sec-head rv"><span class="label">Strumenti e territorio</span><h2>Prima di chiamare</h2></div>'
         f'<div class="tools-grid">{strumenti_card()}'
         f'<a class="card panel rv gcard" href="/costi-avvocato"><span class="label">Trasparenza</span><b>Quanto costa un avvocato</b><span class="note-s">Preventivo scritto, voci di costo, spese vive →</span></a>'
-        f'<a class="card panel rv gcard" href="/gratuito-patrocinio"><span class="label">Reddito sotto 13.659,64 €</span><b>Gratuito patrocinio</b><span class="note-s">Avvocato a spese dello Stato: requisiti e domanda →</span></a></div>'
+        "</div>"
         f'<div class="card panel rv" style="margin-top:14px"><span class="label">Dove operiamo</span><p style="margin-top:10px">Lo Studio riceve a Vigevano e assiste clienti di tutta la Lomellina e dell\'Abbiatense.</p><div class="chips" style="margin-top:14px">{chips}<a class=\'chip\' href=\'/{C.LOMELLINA["slug"]}\'>Tutta la Lomellina</a></div></div>'
         "</div></section>\n"
     )
@@ -694,8 +767,8 @@ def main():
     nuove.update(pagine_comuni())
     nuove[C.LOMELLINA["slug"]] = pagina_lomellina()
     nuove[C.COSTI["slug"]] = pagina_info(C.COSTI)
-    nuove[C.GRATUITO["slug"]] = pagina_info(C.GRATUITO, ("attivita-separazione-divorzio", "Separazione e divorzio"))
     nuove.update(pagine_strumenti())
+    nuove.update(pagine_guide())
 
     tutte = {}
     for slug, s in list(pagine.items()) + list(nuove.items()):
@@ -709,6 +782,11 @@ def main():
             s = fix_contatti(s)
         elif slug == "cookie":
             s = fix_cookie(s)
+        elif slug == "guide":
+            s = fix_indice_guide(s)
+        elif slug == "studio":
+            s = fix_studio(s)
+        s = fix_orari_social(s)
         s = fix_urls(s)
         s = fix_ld(s)
         s = fix_head(s, slug, noindex=slug in ("404", "grazie"))
@@ -745,7 +823,8 @@ def main():
             t += f"- [Avvocato in Lomellina]({clean_url(C.LOMELLINA['slug'])}): tutti i comuni serviti\n"
             t += "\n## Costi e strumenti\n\n"
             t += f"- [Quanto costa un avvocato]({clean_url('costi-avvocato')}): preventivo scritto, parametri, spese vive\n"
-            t += f"- [Gratuito patrocinio]({clean_url('gratuito-patrocinio')}): limite di reddito 13.659,64 euro, domanda all'Ordine di Pavia\n"
+            t += "\n## Nuove guide\n\n" + "".join(f"- [{g['titolo']}]({clean_url(g['slug'])}): {g['sommario']}\n" for g in G.GUIDE)
+            t += "\n## Strumenti\n\n"
             t += "".join(f"- [{x['titolo_breve']}]({clean_url(x['slug'])}): {x['intro']}\n" for x in C.STRUMENTI)
         with open(os.path.join(DIST, fn), "w", encoding="utf-8") as fh:
             fh.write(t)

@@ -157,7 +157,7 @@ COSTI = {
     "h1": "Quanto costa un avvocato",
     "lead": "Prima di iniziare lo Studio consegna un preventivo scritto. Qui spieghiamo da cosa dipende il costo di una pratica e quali spese si aggiungono al compenso.",
     "body": """
-<p><strong>In sintesi:</strong> il compenso si concorda prima di iniziare, per iscritto. Dipende dal valore della pratica, dalla sua complessità e dalle fasi effettivamente svolte. A parte si pagano le spese vive (contributo unificato, notifiche, marche) e, se dovuti, IVA e contributo alla Cassa Forense. Chi ha un reddito basso può avere diritto al <a href="/gratuito-patrocinio">gratuito patrocinio</a>.</p>
+<p><strong>In sintesi:</strong> il compenso si concorda prima di iniziare, per iscritto. Dipende dal valore della pratica, dalla sua complessità e dalle fasi effettivamente svolte. A parte si pagano le spese vive (contributo unificato, notifiche, marche) e, se dovuti, IVA e contributo alla Cassa Forense.</p>
 
 <h2>Il preventivo scritto</h2>
 <p>La legge impone all'avvocato di comunicare al cliente, in forma scritta, la prevedibile misura del costo della prestazione, distinguendo tra oneri, spese e compenso. Lo Studio lo fa sempre, prima di iniziare: il cliente sa in anticipo quanto spenderà e quando.</p>
@@ -202,50 +202,6 @@ COSTI = {
         ("Il preventivo è obbligatorio?", "Sì: l'avvocato deve rendere nota al cliente, in forma scritta o digitale, la prevedibile misura del costo della prestazione, distinguendo oneri, spese e compenso."),
         ("Posso pagare a rate?", "Le modalità di pagamento si concordano nel preventivo. Per le pratiche lunghe il pagamento è in genere distribuito per fasi."),
         ("Se perdo la causa devo pagare anche l'avvocato dell'altra parte?", "Può succedere: di regola chi perde rimborsa le spese legali alla controparte, salvo che il giudice le compensi. Il rischio viene valutato con il cliente prima di iniziare."),
-        ("Esiste un avvocato gratuito?", "Chi ha un reddito sotto la soglia di legge può chiedere il gratuito patrocinio: in quel caso il compenso dell'avvocato lo paga lo Stato."),
-    ],
-}
-
-GRATUITO = {
-    "slug": "gratuito-patrocinio",
-    "title": "Gratuito patrocinio a Vigevano e Pavia: requisiti 2026",
-    "description": "Avvocato a spese dello Stato: limite di reddito 13.659,64 euro, come si calcola il reddito familiare, documenti e domanda all'Ordine degli Avvocati di Pavia.",
-    "label": "Patrocinio a spese dello Stato",
-    "h1": "Gratuito patrocinio: avvocato a spese dello Stato",
-    "lead": "Chi ha un reddito basso può farsi assistere da un avvocato senza pagarne il compenso. Requisiti, calcolo del reddito e procedura per chi vive a Vigevano e in Lomellina.",
-    "body": """
-<p><strong>In sintesi:</strong> nelle cause civili può chiedere il patrocinio a spese dello Stato chi ha un reddito imponibile non superiore a <strong>13.659,64 euro</strong> annui. La soglia è stata fissata dal decreto del Ministero della Giustizia del 22 aprile 2025 e viene aggiornata ogni due anni. Nel calcolo si sommano i redditi dei familiari conviventi, salvo che la causa sia proprio contro di loro. La domanda si presenta al Consiglio dell'Ordine degli Avvocati del tribunale competente: per Vigevano e la Lomellina è quello di <strong>Pavia</strong>.</p>
-
-<h2>Chi può chiederlo</h2>
-<ul>
-<li>Cittadini italiani, cittadini dell'Unione europea e stranieri regolarmente soggiornanti.</li>
-<li>Con un reddito imponibile, risultante dall'ultima dichiarazione, non superiore alla soglia di legge.</li>
-<li>Per far valere ragioni <strong>non manifestamente infondate</strong>: il Consiglio dell'Ordine valuta anche questo.</li>
-</ul>
-
-<h2>Come si calcola il reddito</h2>
-<p>Si considera il reddito imponibile ai fini IRPEF dell'ultima dichiarazione. Se il richiedente vive con il coniuge o con altri familiari, si sommano i redditi di tutti i conviventi. Si aggiungono anche i redditi esenti o soggetti a ritenuta alla fonte, come alcuni sussidi.</p>
-<p><strong>Eccezione importante:</strong> si conta il solo reddito personale quando la causa riguarda diritti della personalità o quando gli interessi del richiedente sono in conflitto con quelli dei conviventi. È il caso tipico della <a href="/attivita-separazione-divorzio">separazione</a> o di una causa contro un familiare.</p>
-
-<h2>Per quali cause</h2>
-<p>Il patrocinio vale per tutte le cause civili, anche di volontaria giurisdizione, e per tutti i gradi del giudizio. Nel diritto di famiglia è molto usato: separazioni, divorzi, <a href="/attivita-affidamento-minori">affidamento e mantenimento dei figli</a>. Vale anche per la <a href="/attivita-negoziazione-assistita">negoziazione assistita</a> e la <a href="/attivita-mediazione-civile">mediazione</a> nei casi previsti dalla legge.</p>
-
-<h2>Come si presenta la domanda</h2>
-<ol>
-<li><strong>Scelta dell'avvocato</strong>: deve essere iscritto nell'elenco degli avvocati abilitati al patrocinio a spese dello Stato.</li>
-<li><strong>Istanza</strong> al Consiglio dell'Ordine degli Avvocati di Pavia, con autocertificazione del reddito, documento d'identità, codice fiscale e descrizione delle ragioni da far valere.</li>
-<li><strong>Delibera</strong> del Consiglio dell'Ordine, che ammette in via anticipata e provvisoria.</li>
-<li>A fine causa il giudice liquida il compenso all'avvocato, che lo riceve dallo Stato.</li>
-</ol>
-
-<h2>Cosa non copre</h2>
-<p>Il patrocinio copre il compenso dell'avvocato e le principali spese di giustizia, come il contributo unificato. Non copre le spese legali della controparte se si perde la causa. Se il reddito cresce oltre la soglia durante il procedimento, l'ammissione può essere revocata, e una dichiarazione falsa comporta conseguenze penali.</p>
-""",
-    "faq": [
-        ("Qual è il limite di reddito per il gratuito patrocinio nel 2026?", "13.659,64 euro di reddito imponibile annuo, secondo il decreto ministeriale del 22 aprile 2025. Il prossimo aggiornamento è atteso nel 2027."),
-        ("Nella separazione conta anche il reddito di mio marito?", "No: quando gli interessi sono in conflitto, come in una separazione, si considera solo il reddito personale del richiedente."),
-        ("Dove si presenta la domanda se abito a Vigevano?", "Al Consiglio dell'Ordine degli Avvocati di Pavia, perché per Vigevano e la Lomellina è competente il Tribunale di Pavia. L'avvocato prepara e deposita l'istanza."),
-        ("Posso scegliere io l'avvocato?", "Sì, purché sia iscritto nell'elenco degli avvocati per il patrocinio a spese dello Stato."),
     ],
 }
 
