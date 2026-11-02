@@ -27,7 +27,7 @@ BASE = "https://studiolegalepernorio.com"
 OGGI = date.today().isoformat()
 WA = "https://wa.me/393333368757?text=Buongiorno%20Avvocato%2C%20vorrei%20fissare%20un%20appuntamento."
 
-INSTAGRAM = "https://www.instagram.com/studiolegalepernorio/"
+INSTAGRAM = "https://www.instagram.com/studio_legale_pernorio/"
 ORARI_TXT = "Lun – Ven 9:00 – 19:00, su appuntamento"
 ICO_IG = '<svg class="ico" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1"/></svg>'
 
@@ -499,7 +499,7 @@ def fix_orari_social(s):
     s = s.replace("Primo colloquio in Studio, dal lunedì al venerdì.", "Primo colloquio in Studio, dal lunedì al venerdì dalle 9 alle 19.")
     s = s.replace("<p style=\"margin-top:22px\">Avv. Daniela Pernorio<br>Ordine degli Avvocati di Pavia</p>",
                   "<p style=\"margin-top:22px\">Avv. Daniela Pernorio<br>Ordine degli Avvocati di Pavia dal 2014</p>")
-    ig = f'<li><a href="{INSTAGRAM}" target="_blank" rel="noopener">Instagram · @studiolegalepernorio</a></li>'
+    ig = f'<li><a href="{INSTAGRAM}" target="_blank" rel="noopener">Instagram · @studio_legale_pernorio</a></li>'
     if INSTAGRAM not in s:
         s = s.replace('<li style="overflow-wrap:anywhere"><a href="mailto:daniela.pernorio@gmail.com">daniela.pernorio@gmail.com</a></li></ul>',
                       '<li style="overflow-wrap:anywhere"><a href="mailto:daniela.pernorio@gmail.com">daniela.pernorio@gmail.com</a></li>' + ig + "</ul>", 1)
@@ -754,6 +754,8 @@ def main():
         shutil.rmtree(DIST)
     shutil.copytree(SRC, DIST)
     shutil.copytree(os.path.join(STATIC, "fonts"), os.path.join(DIST, "fonts"))
+    for fn in os.listdir(os.path.join(STATIC, "root")):
+        shutil.copy(os.path.join(STATIC, "root", fn), os.path.join(DIST, fn))
     os.remove(os.path.join(DIST, "fonts", "fonts.css"))
     with open(os.path.join(DIST, "style.css"), "w", encoding="utf-8") as fh:
         fh.write(build_css())
