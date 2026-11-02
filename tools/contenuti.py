@@ -28,7 +28,7 @@ COMUNI = [
         ],
         "faq": [
             ("Devo andare a Pavia per la mia causa se abito a Mortara?", "Di regola no. Le udienze sono seguite dall'avvocato; la presenza della parte è necessaria solo in alcuni momenti, per esempio nell'udienza di comparizione dei coniugi in una separazione. In quei casi lo Studio la prepara e la accompagna."),
-            ("Posso avere il primo colloquio senza venire a Vigevano?", "Un primo contatto può avvenire per telefono o WhatsApp, per capire se la questione è di competenza dello Studio e quali documenti portare. Il colloquio vero e proprio si svolge in Studio, su appuntamento."),
+            ("Posso avere il primo colloquio senza venire a Vigevano?", "Sì: lo Studio offre il colloquio online, in videochiamata dal browser o su WhatsApp, con i documenti inviati prima tramite il sito. Chi preferisce può venire in Studio, su appuntamento."),
             ("Lo Studio segue anche questioni su terreni e cascine?", "Sì: usucapione, servitù, confini, divisioni ereditarie di fondi agricoli e comproprietà sono materie che lo Studio tratta regolarmente."),
         ],
     },

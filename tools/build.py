@@ -18,6 +18,7 @@ from datetime import date
 sys.path.insert(0, os.path.dirname(__file__))
 import contenuti as C  # noqa: E402
 import guide_nuove as G  # noqa: E402
+import colloquio as CO  # noqa: E402
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SRC = os.path.join(ROOT, "src")
@@ -476,6 +477,30 @@ def pagine_guide():
     return out
 
 
+def pagina_colloquio():
+    body = CO.COME + CO.form_html(esc)
+    aside = CO.TEST_AV + f'<div class="card panel rv"><span class="label">Preferisci parlarne subito?</span><div class="actions" style="margin-top:14px">{BTN_CALL}{BTN_WA}</div></div>' + zone_card()
+    svc = {
+        "@context": "https://schema.org", "@type": "Service", "name": "Colloquio legale online",
+        "serviceType": "Consulenza legale a distanza in videochiamata", "provider": {"@id": BASE + "/#studio"},
+        "areaServed": {"@type": "Country", "name": "Italia"}, "url": clean_url(CO.SLUG),
+        "availableChannel": {"@type": "ServiceChannel", "serviceUrl": clean_url(CO.SLUG), "name": "Videochiamata, WhatsApp video, telefono"},
+    }
+    faq = [
+        ("Serve installare un programma per la videochiamata?", "No. Il link personale si apre nel browser, da computer o telefono. In alternativa si può usare WhatsApp video o il telefono."),
+        ("Come invio i documenti?", "Con il modulo di richiesta, fino a 8 MB in totale, e successivamente via email o PEC. L'avvocato li studia prima del colloquio."),
+        ("Il colloquio online costa come quello in Studio?", "Sì, le condizioni sono le stesse e vengono comunicate al momento della conferma. Prima di iniziare qualsiasi attività si riceve un preventivo scritto."),
+        ("Posso farmi assistere a distanza per tutta la pratica?", "In molti casi sì: documenti, firme, aggiornamenti e incontri si possono gestire online. Alcuni passaggi, come certe udienze, richiedono la presenza personale."),
+    ]
+    return pagina(CO.SLUG, CO.TITLE, CO.DESCRIPTION, [("Home", BASE + "/"), ("Contatti", clean_url("contatti")), ("Colloquio online", None)],
+                  CO.LABEL, CO.H1, CO.LEAD, body + faq_html(faq), aside, extra_ld=[svc, faq_ld(faq)], script=CO.JS)
+
+
+def card_online():
+    return ("<a class='card panel rv gcard' href='/colloquio-online'><span class=\"label\">Novità · Da casa</span>"
+            "<b>Colloquio online con l'avvocato</b><span class=\"note-s\">Videochiamata, documenti inviati prima, riepilogo scritto →</span></a>")
+
+
 def fix_indice_guide(s):
     cards = "".join(
         f"<a class='card glink' href='/{g['slug']}'><span class=\"label\">{esc(g['cat'])}</span><b>{esc(g['titolo'])}</b><span>{esc(g['sommario'])}</span></a>"
@@ -607,7 +632,7 @@ def fix_nav(s):
 
 
 def fix_footer(s):
-    extra = "<li><a href='/strumenti'>Strumenti gratuiti</a></li><li><a href='/costi-avvocato'>Costi e preventivo</a></li>"
+    extra = "<li><a href='/strumenti'>Strumenti gratuiti</a></li><li><a href='/costi-avvocato'>Costi e preventivo</a></li><li><a href='/colloquio-online'>Colloquio online</a></li>"
     s = s.replace("<li><a href='/domande'>Domande frequenti</a></li>", "<li><a href='/domande'>Domande frequenti</a></li>" + extra, 1)
     zone = " · ".join(f"<a href='/{c['slug']}'>{esc(c['nome'])}</a>" for c in C.COMUNI)
     blocco = f'<div class="fzones"><span>Dove operiamo:</span> <a href=\'/\'>Vigevano</a> · {zone} · <a href=\'/{C.LOMELLINA["slug"]}\'>Lomellina</a></div>\n'
@@ -635,6 +660,7 @@ def fix_pratica(s, key):
         '<div class="card panel rv"><h2>Come lavora lo Studio</h2>'
         '<ul class="ticks"><li><span><b>Primo colloquio</b> in Studio a Vigevano, con i documenti: le strade possibili, i tempi, i rischi.</span></li>'
         '<li><span><b>Preventivo scritto</b> prima di iniziare. <a href="/costi-avvocato">Come si forma il costo</a>.</span></li>'
+        '<li><span><b>Anche a distanza</b>: <a href="/colloquio-online">colloquio online</a> in videochiamata, con i documenti inviati prima.</span></li>'
         "<li><span><b>Un solo avvocato</b> segue la pratica dall'inizio alla fine, con aggiornamenti scritti a ogni passaggio.</span></li>"
         '<li><span><b>Accordo prima della causa</b>, quando è possibile: <a href="/attivita-negoziazione-assistita">negoziazione assistita</a> e <a href="/attivita-mediazione-civile">mediazione</a>.</span></li></ul>'
         f'<h3 style="margin-top:22px">Per chi vive in Lomellina e nell\'Abbiatense</h3><div class="chips" style="margin-top:12px">{chips}</div></div>\n'
@@ -681,7 +707,7 @@ def fix_home(s):
     chips = "".join(f"<a class='chip' href='/{c['slug']}'>{esc(c['nome'])}</a>" for c in C.COMUNI)
     sez = (
         '<section><div class="wrap"><div class="sec-head rv"><span class="label">Strumenti e territorio</span><h2>Prima di chiamare</h2></div>'
-        f'<div class="tools-grid">{strumenti_card()}'
+        f'<div class="tools-grid">{card_online()}{strumenti_card()}'
         f'<a class="card panel rv gcard" href="/costi-avvocato"><span class="label">Trasparenza</span><b>Quanto costa un avvocato</b><span class="note-s">Preventivo scritto, voci di costo, spese vive →</span></a>'
         "</div>"
         f'<div class="card panel rv" style="margin-top:14px"><span class="label">Dove operiamo</span><p style="margin-top:10px">Lo Studio riceve a Vigevano e assiste clienti di tutta la Lomellina e dell\'Abbiatense.</p><div class="chips" style="margin-top:14px">{chips}<a class=\'chip\' href=\'/{C.LOMELLINA["slug"]}\'>Tutta la Lomellina</a></div></div>'
@@ -697,11 +723,24 @@ def fix_home(s):
 
 
 def fix_contatti(s):
+    s = s.replace('<aside', '<aside', 1)
+    m = re.search(r'<div class="card panel rv"><form', s)
+    if m:
+        s = s[:m.start()] + '<div style="margin-bottom:14px">' + card_online() + '</div>' + s[m.start():]
     s = s.replace('<p class="ok" hidden>Anteprima: nel sito pubblicato la richiesta arriva via email allo Studio.</p>\n', "")
     s = s.replace('<p class="ok" hidden>Anteprima: nel sito pubblicato la richiesta arriva via email allo Studio.</p>', "")
     s = s.replace("<form action='grazie' class='cf' id='cf' method='POST' name='contatti'>",
                   "<form action='/grazie' class='cf' id='cf' method='POST' name='contatti' data-netlify='true' netlify-honeypot='bot-field'>")
     return s
+
+
+def fix_privacy(s):
+    add = ("<p><b>Colloqui a distanza.</b> Con il modulo di richiesta di colloquio online si possono inviare documenti, conservati "
+           "dal fornitore del modulo (Netlify, Inc.) per il tempo necessario a gestire la richiesta e poi trasferiti nel fascicolo dello Studio. "
+           "Le videochiamate si svolgono, a scelta del cliente, tramite Jitsi Meet (8x8, Inc.) con un link personale non pubblicato, "
+           "WhatsApp o telefono. I colloqui non vengono registrati. La prova di videocamera e microfono presente sul sito funziona solo nel browser "
+           "e non trasmette immagini né audio.</p>\n")
+    return s.replace("<p><b>Diritti.</b>", add + "<p><b>Diritti.</b>", 1)
 
 
 def fix_cookie(s):
@@ -744,7 +783,7 @@ footer .fzones span{text-transform:uppercase;letter-spacing:.16em;font-size:.66r
 def build_css():
     fonts = open(os.path.join(STATIC, "fonts", "fonts.css"), encoding="utf-8").read()
     css = open(os.path.join(SRC, "style.css"), encoding="utf-8").read()
-    return fonts + "\n" + css + CSS_EXTRA
+    return fonts + "\n" + css + CSS_EXTRA + CO.CSS
 
 
 # ---------------------------------------------------------------------------
@@ -771,6 +810,7 @@ def main():
     nuove[C.COSTI["slug"]] = pagina_info(C.COSTI)
     nuove.update(pagine_strumenti())
     nuove.update(pagine_guide())
+    nuove[CO.SLUG] = pagina_colloquio()
 
     tutte = {}
     for slug, s in list(pagine.items()) + list(nuove.items()):
@@ -784,6 +824,8 @@ def main():
             s = fix_contatti(s)
         elif slug == "cookie":
             s = fix_cookie(s)
+        elif slug == "privacy":
+            s = fix_privacy(s)
         elif slug == "guide":
             s = fix_indice_guide(s)
         elif slug == "studio":
@@ -825,6 +867,7 @@ def main():
             t += f"- [Avvocato in Lomellina]({clean_url(C.LOMELLINA['slug'])}): tutti i comuni serviti\n"
             t += "\n## Costi e strumenti\n\n"
             t += f"- [Quanto costa un avvocato]({clean_url('costi-avvocato')}): preventivo scritto, parametri, spese vive\n"
+            t += f"\n## Colloquio online\n\n- [Colloquio online con l'avvocato]({clean_url(CO.SLUG)}): videochiamata dal browser o WhatsApp, invio documenti, riepilogo e preventivo scritto\n"
             t += "\n## Nuove guide\n\n" + "".join(f"- [{g['titolo']}]({clean_url(g['slug'])}): {g['sommario']}\n" for g in G.GUIDE)
             t += "\n## Strumenti\n\n"
             t += "".join(f"- [{x['titolo_breve']}]({clean_url(x['slug'])}): {x['intro']}\n" for x in C.STRUMENTI)
