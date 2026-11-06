@@ -235,6 +235,15 @@ STRUMENTI = [
         "intro": "Tutti i documenti da raccogliere prima del colloquio, da spuntare o stampare.",
         "materia": ("attivita-separazione-divorzio", "Separazione e divorzio"),
     },
+    {
+        "slug": "strumento-calcolo-imposta-successione",
+        "titolo_breve": "Calcolo imposta di successione",
+        "title": "Calcolo imposta di successione 2026 · Franchigie e aliquote",
+        "description": "Quanto si paga di imposta di successione: franchigia di 1 milione per coniuge e figli, 100.000 euro per i fratelli, aliquote 4-6-8%, imposte ipotecaria e catastale e prima casa.",
+        "lead": "Quanto paga ciascun erede: franchigie, aliquote e imposte sugli immobili secondo il Testo unico (D.Lgs. 346/1990).",
+        "intro": "Franchigie, aliquote del 4, 6 e 8%, imposte ipotecaria e catastale, agevolazione prima casa.",
+        "materia": ("attivita-successioni", "Successioni ed eredità"),
+    },
 ]
 
 CHECKLIST = [

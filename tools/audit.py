@@ -230,6 +230,16 @@ def main():
         p("info", "Nessuno strumento WebMCP (document.modelContext.registerTool) per gli agenti nel browser")
     if not any("toolname=" in h for h in pagine.values()):
         p("info", "Nessun modulo con attributi WebMCP dichiarativi (toolname, tooldescription)")
+    # Fonti citate (GEO, Princeton KDD 2024) e server MCP
+    senza_fonti = [x for x in indicizzabili if x.startswith("guida-") and "normattiva.it" not in pagine[x]]
+    if senza_fonti:
+        p("avviso", "Guide senza fonti normative collegate: " + ", ".join(sorted(senza_fonti)))
+    else:
+        info.append("Tutte le guide citano le fonti normative su Normattiva")
+    if not os.path.exists(os.path.join(DIST, ".well-known", "mcp", "server-card.json")):
+        p("info", "Nessuna scheda del server MCP in /.well-known/mcp/server-card.json")
+    if not os.path.exists(os.path.join(ROOT, "functions", "mcp.mjs")):
+        p("info", "Nessun server MCP generato (functions/mcp.mjs)")
     tw = sorted(ratio.items(), key=lambda x: x[1])[:3]
     info.append("Token weight più basso: " + ", ".join(f"{k} {v:.0%}" for k, v in tw))
 

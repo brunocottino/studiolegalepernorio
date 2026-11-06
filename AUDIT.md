@@ -1,6 +1,6 @@
 # Audit del sito (dist/)
 
-Pagine HTML: 68, indicizzabili: 66.
+Pagine HTML: 69, indicizzabili: 67.
 
 ## Errore (0)
 
@@ -43,7 +43,7 @@ Pagine HTML: 68, indicizzabili: 66.
 - `index`: description di 161 caratteri (ideale 70-160)
 - `privacy`: description di 20 caratteri (ideale 70-160)
 
-## Info (10)
+## Info (11)
 
 - `attivita-lavoro`: testo visibile al 15% dell'HTML (token weight)
 - `attivita`: testo visibile al 12% dell'HTML (token weight)
@@ -51,7 +51,8 @@ Pagine HTML: 68, indicizzabili: 66.
 - `cookie`: testo visibile al 11% dell'HTML (token weight)
 - `domiciliazioni`: testo visibile al 9% dell'HTML (token weight)
 - `index`: testo visibile al 14% dell'HTML (token weight)
-- `strumenti`: testo visibile al 12% dell'HTML (token weight)
+- `strumenti`: testo visibile al 13% dell'HTML (token weight)
+- `strumento-calcolo-imposta-successione`: testo visibile al 15% dell'HTML (token weight)
 - `strumento-calcolo-quote-eredita`: testo visibile al 14% dell'HTML (token weight)
 - `strumento-scadenze-multa`: testo visibile al 14% dell'HTML (token weight)
 - `studio`: testo visibile al 14% dell'HTML (token weight)
@@ -59,11 +60,7 @@ Pagine HTML: 68, indicizzabili: 66.
 ## Note
 
 - `guida-domiciliazioni-tribunale-pavia` ha un solo link interno in entrata
-- `guida-impugnare-delibera-condominiale` ha un solo link interno in entrata
-- `guida-incidente-stradale-cosa-fare` ha un solo link interno in entrata
-- `guida-licenziamento-cosa-fare` ha un solo link interno in entrata
-- `guida-pignoramento-stipendio-pensione` ha un solo link interno in entrata
-- `guida-prestito-tra-privati` ha un solo link interno in entrata
 - Pagine dei comuni: somiglianza massima 38% (avvocato-cilavegna / avvocato-gambolo); soglia di allarme 50%
-- Grafo delle entità: /#studio citato in 66 pagine, /#avvocato citato in 46 pagine, /#sito citato in 66 pagine; 66 pagine con nodo WebPage proprio
+- Grafo delle entità: /#studio citato in 67 pagine, /#avvocato citato in 46 pagine, /#sito citato in 67 pagine; 67 pagine con nodo WebPage proprio
+- Tutte le guide citano le fonti normative su Normattiva
 - Token weight più basso: domiciliazioni 9%, grazie 9%, 404 10%

@@ -9,6 +9,10 @@ Sorgente del sito https://studiolegalepernorio.com (Netlify, progetto `studioleg
 - `tools/agenti.py`: strumenti WebMCP, versioni Markdown, grafo delle entità, robots.txt per gli assistenti IA
 - `tools/audit.py`: audit SEO, GEO e agenti IA di `dist/`, scrive `AUDIT.md` (lanciarlo dopo ogni build)
 - `tools/indexnow.py`: avvisa Bing e IndexNow degli URL, solo dopo la pubblicazione
+- `tools/fonti.py`: fonti normative delle guide con link Normattiva (`python3 tools/fonti.py --verifica` controlla i link)
+- `tools/visibilita_ia.py`: misura se ChatGPT, Gemini, Perplexity e Claude citano lo Studio (servono le chiavi API)
+- `functions/mcp.mjs`: server MCP generato dalla build (non modificarlo a mano)
+- `ELENCHI.md`: dati identici da usare su Google, Bing, Apple, OpenStreetMap e negli elenchi
 - `netlify/`: `_redirects` e `_headers`
 - `RICERCA-STRUMENTI.md`: ricerca sugli strumenti open source e prossimi passi
 
@@ -17,7 +21,7 @@ Sorgente del sito https://studiolegalepernorio.com (Netlify, progetto `studioleg
 ```
 python3 tools/build.py          # genera dist/
 python3 tools/audit.py          # controlla dist/ e scrive AUDIT.md
-netlify deploy --dir dist --prod   # pubblica (oppure trascina dist/ su app.netlify.com)
+netlify deploy --dir dist --functions functions --prod   # pubblica sito + server MCP (il trascinamento di dist/ pubblica solo il sito, senza /mcp)
 python3 tools/indexnow.py       # dopo la pubblicazione
 ```
 

@@ -51,3 +51,43 @@ Installare pacchetti esterni in questa sessione era bloccato dai permessi. Così
 5. **Espansione su più sedi**: la struttura è pronta. Ogni sede nuova avrà un nodo `LegalService` con il proprio `@id` (es. `/#sede-pavia`), collegato a `#studio` con `parentOrganization`, una sua pagina `/sede-<città>` e una sua scheda Google. Il codice va scritto quando ci sarà l'indirizzo vero: inventare sedi è vietato da Google e dal codice deontologico.
 
 Limite deontologico sempre valido: i testi restano informativi (art. 17 e 35 del Codice deontologico forense). Niente "primo studio d'Italia" sul sito, nemmeno negli strumenti per le IA: l'obiettivo si raggiunge con i fatti, non con lo slogan.
+
+---
+
+# Seconda ricerca, più a fondo (6 novembre 2026)
+
+## Cosa dicono i dati più recenti
+
+- **Studio di Yext** su 6,8 milioni di citazioni in ChatGPT, Gemini e Perplexity: il 44% viene dai siti delle aziende e il 42% dalle schede e dagli elenchi delle attività. Gli elenchi pesano quasi quanto il sito.
+- **Sterling Sky** (giugno 2026): i risultati locali dati dalle IA mostrano molte meno attività rispetto ai 3 risultati della mappa di Google (5.943 contro 18.330 in 322 mercati). Chi entra lo fa a spese degli altri.
+- **Princeton (KDD 2024)**: citare fonti precise, dati con la loro provenienza e citazioni di esperti aumenta la probabilità di essere ripresi dai motori IA.
+- **Varietà tra motori**: ogni IA cita fonti diverse per la stessa domanda, quindi la visibilità va misurata motore per motore.
+- **Mappe di ChatGPT**: usano Mapbox, che si basa su OpenStreetMap, e i risultati locali vengono anche da Bing.
+
+## Cosa è stato aggiunto
+
+1. **Fonti normative su tutte le 25 guide**: 70 riferimenti con link permanenti a Normattiva (URN:NIR ufficiali; i 15 atti sono stati controllati uno per uno con `tools/fonti.py --verifica`). Ogni fonte compare anche nei dati strutturati dell'articolo (`citation` di tipo `Legislation`). Nessuno studio della zona lo fa.
+2. **Server MCP dello Studio** su `/mcp`, con la scheda di scoperta in `/.well-known/mcp/server-card.json`. Chiunque può aggiungere lo Studio come connettore in ChatGPT, Claude e negli altri programmi MCP, senza registrazione. Ha 6 strumenti di sola lettura: informazioni sullo Studio, ricerca nel sito, lettura di una pagina, quote di eredità, imposta di successione, scadenze di una multa. È stato provato con tutte le chiamate del protocollo. Va pubblicato con `--functions functions`.
+3. **Nuovo strumento: calcolo dell'imposta di successione**, con franchigie, aliquote del 4, 6 e 8%, imposte ipotecaria e catastale e agevolazione prima casa (D.Lgs. 346/1990). È una ricerca molto frequente e attira link. È disponibile anche come strumento WebMCP e MCP.
+4. **Guide correlate** in fondo a ogni guida, scelte in base al contenuto: le guide con un solo link in entrata sono scese da 6 a 1.
+5. **Navigazione istantanea** (Speculation Rules): Chrome ed Edge precaricano la pagina quando il dito si avvicina al link. Migliora i Core Web Vitals.
+6. **`ELENCHI.md`**: dati identici per Google, Bing Places, Apple Business Connect, OpenStreetMap (tag pronti), Pagine Gialle, Yelp, Foursquare e gli elenchi forensi.
+7. **`tools/visibilita_ia.py`**: 15 domande da cliente poste a Gemini, ChatGPT, Perplexity e Claude con la ricerca web attiva, senza mai nominare lo Studio. Conta quante volte lo Studio viene citato e salva lo storico. Le chiamate alle API non sono ancora state provate: mancano le chiavi.
+
+## Scartato, e perché
+
+- **Pagine "servizio + comune" a tappeto** (es. 18 materie × 7 comuni): Google le tratta come pagine doorway. Le pagine dei comuni attuali sono diverse tra loro al 62% o più, e così devono restare.
+- **Valutazioni a stelle nei dati strutturati**: Google non le mostra per le recensioni pubblicate dall'attività stessa e può penalizzarle.
+- **Wikidata**: lo Studio non ha ancora fonti indipendenti che lo rendano rilevante. Rischio di cancellazione.
+- **Risposte con IA sul sito (NLWeb, endpoint /ask)**: servirebbe un modello IA a pagamento e c'è il rischio di risposte legali sbagliate a nome dello Studio. MCP e WebMCP danno dati e calcoli certi, lasciando l'interpretazione all'assistente di chi chiede.
+
+## Fonti della ricerca
+
+- https://arxiv.org/pdf/2606.20065 (GEO at Scale)
+- https://arxiv.org/pdf/2605.25517 (What Gets Cited)
+- https://arxiv.org/pdf/2607.14035 (rassegna GEO 2023-2026)
+- https://metavert.io/industry/generative-engine-optimization-for-local-businesses
+- https://github.com/modelcontextprotocol/modelcontextprotocol/issues/1649 (MCP Server Cards)
+- https://bndy.org/posts/chatgpt-attribution-mapbox-openstreetmap/
+- https://www.normattiva.it/staticPage/utilita (link URN)
+- https://github.com/Sanrovax/ai-visibility-checker

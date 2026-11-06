@@ -20,11 +20,13 @@ import contenuti as C  # noqa: E402
 import guide_nuove as G  # noqa: E402
 import colloquio as CO  # noqa: E402
 import agenti as AG  # noqa: E402
+import fonti as FO  # noqa: E402
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SRC = os.path.join(ROOT, "src")
 STATIC = os.path.join(ROOT, "static")
 DIST = os.path.join(ROOT, "dist")
+FUNZIONI = os.path.join(ROOT, "functions")  # Netlify Functions generate (server MCP)
 BASE = "https://studiolegalepernorio.com"
 OGGI = date.today().isoformat()
 WA = "https://wa.me/393333368757?text=Buongiorno%20Avvocato%2C%20vorrei%20fissare%20un%20appuntamento."
@@ -62,7 +64,9 @@ MATERIE_KW = {
 
 # Strumenti collegati a guide e materie
 STRUMENTI_LINK = {
-    "guida-successioni-autoliquidazione-imposta": 0,
+    "guida-successioni-autoliquidazione-imposta": 3,
+    "guida-eredita-con-debiti": 3,
+    "guida-testamento-olografo": 0,
     "attivita-successioni": 0,
     "guida-multa-autovelox-2026": 1,
     "attivita-codice-della-strada": 1,
@@ -351,6 +355,22 @@ var r=document.getElementById('ck-reset');if(r)r.addEventListener('click',functi
 </script>"""
 
 
+JS_IMPOSTA = """
+<script>
+(function(){
+""" + AG.CALC_IMPOSTA_JS + r"""
+var f=document.getElementById('is');if(!f)return;
+function num(v){return parseFloat(String(v||'').replace(/\./g,'').replace(',','.'))||0}
+function eur(x){return x.toLocaleString('it-IT',{style:'currency',currency:'EUR',maximumFractionDigits:0})}
+function run(){var r=impostaSuccessione({quota:num(f.quota.value),rapporto:f.rapporto.value,disabile:f.disabile.checked,immobili:num(f.immobili.value),primaCasa:f.primaCasa.checked});
+ var h='<table class="qt"><tbody><tr><td>Franchigia</td><td>'+eur(r.franchigia_euro)+'</td></tr><tr><td>Base imponibile</td><td>'+eur(r.base_imponibile_euro)+'</td></tr><tr><td>Aliquota</td><td>'+r.aliquota_percento+'%</td></tr><tr><td><b>Imposta di successione</b></td><td><b>'+eur(r.imposta_successione_euro)+'</b></td></tr>';
+ if(r.imposte_ipotecaria_catastale){h+='<tr><td>Imposta ipotecaria (per l\'intera eredità)</td><td>'+eur(r.imposte_ipotecaria_catastale.ipotecaria_euro)+'</td></tr><tr><td>Imposta catastale (per l\'intera eredità)</td><td>'+eur(r.imposte_ipotecaria_catastale.catastale_euro)+'</td></tr>'}
+ document.getElementById('is-out').innerHTML=h+'</tbody></table>'}
+f.addEventListener('input',run);f.addEventListener('change',run);run();
+})();
+</script>"""
+
+
 def pagine_strumenti():
     out = {}
     T = C.STRUMENTI
@@ -427,14 +447,43 @@ def pagine_strumenti():
                             "Strumento gratuito · Famiglia", "Checklist dei documenti per la separazione", t["lead"],
                             body, aside_std(t["materia"]), extra_ld=[tool_ld(t)], script=JS_CHECK)
 
+    # 4. Imposta di successione
+    t = T[3]
+    body = (
+        '<div class="card panel rv tool"><form id="is" onsubmit="return false">'
+        '<div class="tgrid"><label>Valore della quota ricevuta (€)<input type="text" name="quota" inputmode="decimal" value="1.200.000"></label>'
+        '<label>Chi riceve<select name="rapporto"><option value="coniuge">Coniuge, unito civilmente, figlio, genitore o altro parente in linea retta</option>'
+        '<option value="fratello">Fratello o sorella</option><option value="parente">Altro parente fino al 4° grado o affine</option><option value="altri">Altra persona</option></select></label>'
+        '<label>Valore catastale degli immobili dell\'eredità (€, facoltativo)<input type="text" name="immobili" inputmode="decimal" placeholder="es. 150.000"></label></div>'
+        '<label class="tchk"><input type="checkbox" name="disabile"> L\'erede ha una disabilità grave (legge 104/1992)</label>'
+        '<label class="tchk"><input type="checkbox" name="primaCasa"> Si chiede l\'agevolazione prima casa</label>'
+        '</form><div id="is-out" aria-live="polite"></div></div>'
+        '<article class="card panel article rv">'
+        "<h2>Franchigie e aliquote</h2>"
+        "<p>L'imposta si calcola <strong>per ciascun erede</strong>, sul valore della quota ricevuta che supera la franchigia (art. 7 del D.Lgs. 346/1990):</p>"
+        "<ul><li><strong>Coniuge, unito civilmente e parenti in linea retta</strong> (figli, genitori, nipoti in linea retta): 4% oltre 1.000.000 € a testa.</li>"
+        "<li><strong>Fratelli e sorelle</strong>: 6% oltre 100.000 € a testa.</li>"
+        "<li><strong>Altri parenti fino al quarto grado e affini</strong>: 6% senza franchigia.</li>"
+        "<li><strong>Tutti gli altri</strong>: 8% senza franchigia.</li>"
+        "<li><strong>Erede con disabilità grave</strong>: franchigia di 1.500.000 €.</li></ul>"
+        "<h2>Le imposte sugli immobili</h2>"
+        "<p>Se nell'eredità ci sono immobili si pagano anche l'<strong>imposta ipotecaria</strong> (2%) e quella <strong>catastale</strong> (1%) sul valore catastale, con un minimo di 200 € ciascuna, una sola volta per immobile. Con l'agevolazione <strong>prima casa</strong>, se almeno un erede ne ha i requisiti, sono fisse: 200 € ciascuna. Per questo, anche quando l'imposta di successione è zero, con una casa nell'eredità qualcosa si paga quasi sempre.</p>"
+        "<h2>Cosa il calcolo non considera</h2>"
+        "<p>Debiti e spese deducibili, donazioni fatte in vita (che si sommano alla quota ai fini della franchigia), beni esenti come i titoli di Stato, imposta di bollo, tributi speciali e tassa ipotecaria. Dal 2025 l'imposta si autoliquida: lo spiega la <a href='/guida-successioni-autoliquidazione-imposta'>guida sulla dichiarazione di successione</a>. Per sapere chi eredita, c'è il <a href='/strumento-calcolo-quote-eredita'>calcolo delle quote</a>.</p>"
+        f'<p class="note-s">Strumento a scopo informativo, aggiornato a {C.AGGIORNATO}. Fonte: <a href="https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:decreto.legislativo:1990-10-31;346" target="_blank" rel="noopener">D.Lgs. 346/1990 su Normattiva</a>.</p></article>'
+    )
+    out[t["slug"]] = pagina(t["slug"], t["title"], t["description"], crumbs_base + [(t["titolo_breve"], None)],
+                            "Strumento gratuito · Successioni", "Calcolo dell'imposta di successione", t["lead"],
+                            body, aside_std(t["materia"]), extra_ld=[tool_ld(t)], script=JS_IMPOSTA)
+
     # Indice strumenti
     cards = strumenti_card()
     body = ('<article class="card panel article rv"><p>Strumenti gratuiti preparati dallo Studio per orientarsi prima di parlare con un avvocato. Funzionano direttamente nel browser: i dati inseriti non vengono inviati né salvati dallo Studio.</p></article>'
             f'<div style="display:grid;gap:14px;margin-top:14px">{cards}</div>')
     out["strumenti"] = pagina("strumenti", "Strumenti legali gratuiti · Studio Legale Pernorio, Vigevano",
-                              "Calcolo delle quote di eredità, scadenze per pagare o contestare una multa, checklist dei documenti per la separazione. Strumenti gratuiti dello Studio Legale Pernorio.",
+                              "Calcolo delle quote di eredità e dell'imposta di successione, scadenze di una multa, checklist per la separazione. Strumenti gratuiti dello Studio Legale Pernorio.",
                               [("Home", BASE + "/"), ("Strumenti", None)], "Strumenti gratuiti", "Strumenti legali gratuiti",
-                              "Calcoli e checklist per orientarsi su eredità, multe e separazione.", body, aside_std())
+                              "Calcoli e checklist per orientarsi su eredità, imposte di successione, multe e separazione.", body, aside_std())
     return out
 
 
@@ -818,7 +867,41 @@ DESC_NUOVE = {
 }
 
 
+# Navigazione istantanea: il browser precarica la pagina quando il dito o il mouse
+# si avvicina al link (Speculation Rules, Chrome/Edge; ignorato dagli altri browser).
+SPECULATION = ('<script type="speculationrules">' + json.dumps({"prefetch": [{"where": {"and": [
+    {"href_matches": "/*"}, {"not": {"href_matches": "/grazie"}}, {"not": {"href_matches": "/*.md"}},
+    {"not": {"selector_matches": "[target=_blank]"}}]}, "eagerness": "moderate"}]}) + "</script>")
+
+
+CORRELATE = {}
+STOP = set("della delle degli dello dalla dalle sono come cosa quando quanto anche più può deve fare essere stato alla allo agli alle nella nelle negli nel con per tra fra che non una uno gli dei del dal sul sulla questo questa studio pernorio avvocato vigevano guida guide".split())
+
+
+def calcola_correlate(pagine):
+    """Per ogni guida, le 3 guide più vicine per contenuto (Jaccard sulle parole)."""
+    def parole(h):
+        m = re.search(r"<main>(.*)</main>", h, re.S)
+        t = html.unescape(re.sub(r"<[^>]+>", " ", re.sub(r"<script.*?</script>", " ", m.group(1) if m else h, flags=re.S)))
+        return {w for w in re.findall(r"[a-zàèéìòù]{5,}", t.lower()) if w not in STOP}
+    g = {k: parole(v) for k, v in pagine.items() if k.startswith("guida-")}
+    df = {}
+    for ws in g.values():
+        for w in ws:
+            df[w] = df.get(w, 0) + 1
+    comuni = {w for w, n in df.items() if n > len(g) * 0.2}  # parole troppo diffuse: non distinguono il tema
+    g = {k: ws - comuni for k, ws in g.items()}
+    titoli = {k: html.unescape(re.search(r"<h1[^>]*>(.*?)</h1>", v, re.S).group(1)) for k, v in pagine.items() if k in g}
+    for a in g:
+        sim = sorted(((len(g[a] & g[b]) / max(1, len(g[a] | g[b])), b) for b in g if b != a), reverse=True)[:3]
+        CORRELATE[a] = [(b, re.sub(r"<[^>]+>", "", titoli[b]).strip()) for _, b in sim]
+
+
 def fix_agenti(s, slug):
+    if slug in CORRELATE and "</article>" in s:
+        li = "".join(f"<li><a href='/{b}'>{esc(t)}</a></li>" for b, t in CORRELATE[slug])
+        i = s.rfind("</article>") + len("</article>")
+        s = s[:i] + f'<div class="card panel rv" style="margin-top:14px"><h2>Guide correlate</h2><ul>{li}</ul></div>' + s[i:]
     if slug in DESC_NUOVE:
         d = esc(DESC_NUOVE[slug])
         s = re.sub(r'<meta name="description" content="[^"]*">', f'<meta name="description" content="{d}">', s, count=1)
@@ -828,12 +911,24 @@ def fix_agenti(s, slug):
     desc = html.unescape(m.group(1)) if m else ""
     url = clean_url(slug)
 
+    fonti = FO.FONTI.get(slug, [])
+
     def bc(mm):
         d = json.loads(mm.group(1))
         if isinstance(d, dict) and d.get("@type") == "BreadcrumbList":
             d["@id"] = url + "#percorso"
+        if isinstance(d, dict) and d.get("@type") == "Article" and fonti:
+            d["citation"] = [{"@type": "Legislation", "name": x["etichetta"], "legislationIdentifier": x["urn"],
+                              "url": x["url"], "isPartOf": {"@type": "Legislation", "name": FO.ATTI[x["atto"]]},
+                              "legislationJurisdiction": "IT"} for x in fonti]
         return ld(d)
     s = re.sub(r'<script type="application/ld\+json">(.*?)</script>', bc, s, flags=re.S)
+    if fonti and "</article>" in s:
+        li = "".join(f'<li><a href="{esc(x["url"])}" target="_blank" rel="noopener">{esc(x["etichetta"])}</a></li>' for x in fonti)
+        box = ('<div class="card panel rv fonti" style="margin-top:14px"><h2>Fonti normative</h2>'
+               f'<ul>{li}</ul><p class="note-s">Testi ufficiali su Normattiva, la banca dati pubblica della normativa italiana. Collegamenti controllati il {OGGI[8:10]}/{OGGI[5:7]}/{OGGI[:4]}.</p></div>')
+        i = s.rfind("</article>") + len("</article>")
+        s = s[:i] + box + s[i:]
     nodi = []
     if url + "#pagina" not in s:
         n = AG.nodo_pagina(slug, title, desc, OGGI)
@@ -847,7 +942,7 @@ def fix_agenti(s, slug):
         s = s.replace("</body>", "".join(ld(n) for n in nodi) + "\n</body>", 1)
     testa = f'<link rel="alternate" type="text/markdown" href="{AG.md_di(slug)}" title="Versione Markdown per assistenti IA">'
     s = s.replace('<link rel="manifest"', testa + '<link rel="manifest"', 1)
-    s = s.replace("</body>", '<script src="/agenti.js" defer></script>\n</body>', 1)
+    s = s.replace("</body>", '<script src="/agenti.js" defer></script>\n' + SPECULATION + "\n</body>", 1)
     if slug == "contatti":
         s = AG.modulo_webmcp(s)
     return s
@@ -868,6 +963,15 @@ def scrivi_agenti(tutte, indicizzabili):
         json.dump(indice, fh, ensure_ascii=False, separators=(",", ":"))
     with open(os.path.join(DIST, "agenti.js"), "w", encoding="utf-8") as fh:
         fh.write(AG.agenti_js(dati_studio()))
+    # Server MCP (Netlify Function) e scheda di scoperta
+    versione = OGGI.replace("-", ".")
+    os.makedirs(FUNZIONI, exist_ok=True)
+    with open(os.path.join(FUNZIONI, "mcp.mjs"), "w", encoding="utf-8") as fh:
+        fh.write(AG.mcp_function(dati_studio(), indice, versione))
+    wk = os.path.join(DIST, ".well-known", "mcp")
+    os.makedirs(wk, exist_ok=True)
+    with open(os.path.join(wk, "server-card.json"), "w", encoding="utf-8") as fh:
+        json.dump(AG.server_card(versione), fh, ensure_ascii=False, indent=1)
     with open(os.path.join(DIST, "robots.txt"), "w", encoding="utf-8") as fh:
         fh.write(AG.ROBOTS)
 
@@ -898,6 +1002,7 @@ def main():
     nuove.update(pagine_guide())
     nuove[CO.SLUG] = pagina_colloquio()
 
+    calcola_correlate({**pagine, **nuove})
     tutte = {}
     for slug, s in list(pagine.items()) + list(nuove.items()):
         if slug.startswith("attivita-"):
@@ -959,7 +1064,8 @@ def main():
             t += ("\n## Per agenti e assistenti IA\n\n"
                   f"- Ogni pagina ha una versione Markdown: aggiungere .md all'indirizzo (es. {BASE}/attivita-separazione-divorzio.md, home: {BASE}/index.md)\n"
                   f"- [Indice di ricerca JSON]({BASE}/cerca.json): titolo, descrizione, URL e versione Markdown di ogni pagina\n"
-                  "- Strumenti WebMCP nel browser (document.modelContext): informazioni-studio, cerca-nel-sito, calcola-quote-eredita, scadenze-multa, prepara-richiesta-allo-studio (non invia nulla senza il click della persona)\n")
+                  f"- Server MCP pubblico, senza registrazione: {BASE}/mcp (Streamable HTTP; scheda: {BASE}/.well-known/mcp/server-card.json)\n"
+                  "- Strumenti WebMCP nel browser (document.modelContext): informazioni-studio, cerca-nel-sito, calcola-quote-eredita, calcola-imposta-successione, scadenze-multa, prepara-richiesta-allo-studio (non invia nulla senza il click della persona)\n")
         with open(os.path.join(DIST, fn), "w", encoding="utf-8") as fh:
             fh.write(t)
 
