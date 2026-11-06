@@ -231,3 +231,39 @@ VECCHI_URL = {
     "/news": "/guide",
     "/index.html": "/",
 }
+
+# ---------------------------------------------------------------------------
+# Inviti a chiamare dentro le guide
+# ---------------------------------------------------------------------------
+# Chi legge una guida ha un problema concreto. Il riquadro compare a metà
+# articolo, dove il lettore ha capito il tema ma non ha ancora finito di leggere,
+# e parla della sua situazione. Toni informativi, nessuna promessa di risultato.
+# Formato: slug -> (domanda, testo)
+
+CTA = {
+    "guida-saldo-e-stralcio-banche-finanziarie": ("Ha ricevuto una lettera da una banca, una finanziaria o una società di recupero?", "Prima di rispondere o di pagare, conviene far controllare il debito: chi lo chiede, se è prescritto, se l'importo è giusto. Se è arrivato un decreto ingiuntivo, ci sono 40 giorni per opporsi."),
+    "guida-usucapione-quando-si-diventa-proprietari": ("Usa da anni una casa o un terreno che non è intestato a lei?", "Con le visure e qualche documento si può capire in un colloquio se ci sono i requisiti e quale strada è più rapida: accordo in mediazione o causa."),
+    "guida-separazione-divorzio-unica-domanda": ("State pensando a separazione o divorzio?", "In un primo colloquio si capisce quale strada è possibile nel vostro caso (consensuale, giudiziale, negoziazione assistita), con tempi e costi messi per iscritto prima di iniziare."),
+    "guida-amministrazione-di-sostegno": ("Un genitore o un familiare non riesce più a gestire pagamenti e pratiche?", "Lo Studio prepara il ricorso al Giudice Tutelare di Pavia e segue l'amministratore nei rendiconti e nelle autorizzazioni. Se il familiare non può spostarsi, si parte da un colloquio con lei."),
+    "guida-sfratto-per-morosita": ("L'inquilino non paga?", "Ogni mese di attesa è un canone in più da recuperare. Con il contratto e l'elenco dei mancati pagamenti si valuta subito se e come procedere."),
+    "guida-affidamento-figli-condiviso-esclusivo": ("Dovete decidere come organizzare la vita dei figli?", "Un colloquio aiuta a capire cosa è ragionevole chiedere, come scrivere un piano genitoriale che funzioni e quando ha senso andare dal giudice."),
+    "guida-assegno-mantenimento-figli": ("Deve fissare o rivedere un assegno di mantenimento?", "Con i redditi delle due parti e le spese dei figli si può stimare un importo ragionevole e capire se c'è spazio per un accordo."),
+    "guida-casa-familiare-separazione": ("Vi state separando e c'è una casa di mezzo?", "Proprietà, mutuo e figli cambiano le risposte. Con l'atto di acquisto e il mutuo si valutano le soluzioni possibili prima di firmare qualsiasi accordo."),
+    "guida-costo-separazione-consensuale": ("Vuole sapere quanto costerebbe la sua separazione?", "Lo Studio fa un preventivo scritto dopo il primo colloquio, prima di iniziare. Nessuna sorpresa sui costi."),
+    "guida-divorzio-tempi": ("Siete separati e volete divorziare?", "Basta la sentenza o l'accordo di separazione per verificare se i termini sono maturati e quale strada è più rapida."),
+    "guida-fine-convivenza-diritti": ("La convivenza è finita e non sapete come dividere casa, spese e figli?", "In un colloquio si chiarisce cosa spetta a ciascuno e come mettere l'accordo per iscritto."),
+    "guida-scioglimento-unione-civile": ("Volete sciogliere l'unione civile?", "Si può fare anche senza tribunale, se c'è accordo. In un colloquio si sceglie la strada più semplice per il vostro caso."),
+    "guida-eredita-con-debiti": ("È morto un familiare e teme che ci siano debiti?", "Prima di compiere qualsiasi atto sull'eredità conviene un parere: alcuni comportamenti valgono come accettazione e fanno rispondere dei debiti."),
+    "guida-testamento-olografo": ("Vuole fare testamento o ha trovato un testamento da verificare?", "Un controllo prima evita molte liti dopo: requisiti, quote di legittima, pubblicazione dal notaio."),
+    "guida-successioni-autoliquidazione-imposta": ("Deve presentare una dichiarazione di successione?", "Con l'elenco dei beni e degli eredi si capisce cosa va dichiarato, quanto si paga e se ci sono questioni da risolvere tra eredi."),
+    "guida-deposito-cauzionale-affitto": ("Il proprietario non le restituisce il deposito cauzionale?", "Con il contratto e il verbale di riconsegna si valuta se le trattenute sono legittime e come chiedere la restituzione."),
+    "guida-diritti-inquilino": ("Ha un problema con il proprietario di casa?", "Contratto alla mano, in un colloquio si chiarisce cosa può pretendere e come farlo per iscritto."),
+    "guida-impugnare-delibera-condominiale": ("Vuole contestare una delibera del condominio?", "I termini sono brevi: 30 giorni. Conviene far vedere subito il verbale."),
+    "guida-incidente-stradale-cosa-fare": ("Ha avuto un incidente e l'assicurazione non risponde o offre poco?", "Con il CID, le foto e i referti medici si valuta se l'offerta è congrua e come chiedere il risarcimento completo."),
+    "guida-licenziamento-cosa-fare": ("Ha ricevuto una lettera di licenziamento?", "Ci sono 60 giorni per impugnarlo. Porti la lettera e il contratto: in un colloquio si capisce se ci sono margini."),
+    "guida-multa-autovelox-2026": ("Ha ricevuto una multa e pensa di contestarla?", "I termini sono brevi: 30 giorni per il Giudice di Pace, 60 per il Prefetto. Con il verbale si valuta subito se il ricorso ha senso."),
+    "guida-pignoramento-stipendio-pensione": ("Le è arrivato un pignoramento o un atto di precetto?", "Con l'atto ricevuto si verifica se gli importi e i limiti di legge sono rispettati e se c'è spazio per un accordo con il creditore."),
+    "guida-prestito-tra-privati": ("Ha prestato soldi e non le vengono restituiti?", "Bonifici, messaggi e scritture possono bastare come prova. In un colloquio si valuta la strada più rapida per recuperarli."),
+    "guida-negoziazione-assistita-o-mediazione": ("Vuole chiudere una lite senza una causa?", "In un colloquio si sceglie lo strumento giusto, mediazione o negoziazione assistita, e si prepara la proposta."),
+}
+CTA_DEFAULT = ("Ha una situazione simile?", "Ne parli con l'avvocato: in un primo colloquio si capiscono le strade possibili, i tempi e i costi, messi per iscritto prima di iniziare.")

@@ -835,6 +835,14 @@ footer .fzones span{text-transform:uppercase;letter-spacing:.16em;font-size:.66r
 """
 
 
+CSS_EXTRA += """
+.article .caso{margin:30px 0;padding:22px 22px 18px;border-radius:18px;background:color-mix(in srgb,var(--forest) 7%,var(--card));border:1px solid color-mix(in srgb,var(--forest) 22%,transparent)}
+.article .caso .caso-q{font-family:var(--display);font-size:1.45rem;line-height:1.3;margin:8px 0 6px;color:var(--ink)}
+.article .caso p{margin:0 0 10px}
+.article .caso .actions{margin:14px 0 10px}
+"""
+
+
 def build_css():
     fonts = open(os.path.join(STATIC, "fonts", "fonts.css"), encoding="utf-8").read()
     css = open(os.path.join(SRC, "style.css"), encoding="utf-8").read()
@@ -923,6 +931,36 @@ def calcola_correlate(pagine):
     for a in g:
         sim = sorted(((len(g[a] & g[b]) / max(1, len(g[a] | g[b])), b) for b in g if b != a), reverse=True)[:3]
         CORRELATE[a] = [(b, re.sub(r"<[^>]+>", "", titoli[b]).strip()) for _, b in sim]
+
+
+TEL_TXT = "0381 386276"
+
+
+def cta_guida(s, slug):
+    """Pulsanti in testa alla guida e riquadro 'il suo caso' a metà articolo."""
+    if not slug.startswith("guida-") or slug == "guida-domiciliazioni-tribunale-pavia":
+        return s
+    # pulsanti nell'intestazione, se mancano (guide originali)
+    m = re.search(r'(<section class="phero">.*?<p class=lead>.*?</p>)(</div></section>)', s, re.S)
+    if m and "class=actions" not in m.group(1):
+        s = s.replace(m.group(0), m.group(1) + f"<div class=actions>{BTN_CALL}{BTN_WA}</div>" + m.group(2), 1)
+    a = s.find('<article class="card panel article')
+    if a == -1:
+        return s
+    dom, testo = RI.CTA.get(slug, RI.CTA_DEFAULT)
+    box = (
+        '<aside class="caso" aria-label="Parlarne con lo Studio">'
+        f'<span class="label">Il suo caso</span><p class="caso-q">{esc(dom)}</p><p>{esc(testo)}</p>'
+        f'<div class="actions">{BTN_CALL}{BTN_WA}</div>'
+        f'<p class="note-s">Oppure chiami lo <a href="tel:+390381386276">{TEL_TXT}</a> · {ORARI_TXT} · '
+        '<a href="/colloquio-online">colloquio anche online</a></p></aside>\n'
+    )
+    fine = s.find("</article>", a)
+    pos = [m.start() for m in re.finditer(r"<h2[ >]", s[a:fine])]
+    i = a + pos[2] if len(pos) >= 3 else (a + pos[-1] if pos else s.rfind('<p class="note-s">A cura', a, fine))
+    if i < a:
+        return s
+    return s[:i] + box + s[i:]
 
 
 def applica_ricerche(s, slug):
@@ -1137,6 +1175,7 @@ def main():
         elif slug == "studio":
             s = fix_studio(s)
         s = applica_ricerche(s, slug)
+        s = cta_guida(s, slug)
         s = fix_orari_social(s)
         s = fix_urls(s)
         s = fix_ld(s)
