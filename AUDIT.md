@@ -1,6 +1,6 @@
 # Audit del sito (dist/)
 
-Pagine HTML: 69, indicizzabili: 67.
+Pagine HTML: 70, indicizzabili: 67.
 
 ## Errore (0)
 
@@ -18,14 +18,14 @@ Pagine HTML: 69, indicizzabili: 67.
 - `attivita-sinistri-responsabilita`: testo visibile al 15% dell'HTML (token weight)
 - `attivita`: testo visibile al 12% dell'HTML (token weight)
 - `contatti`: testo visibile al 12% dell'HTML (token weight)
-- `cookie`: testo visibile al 10% dell'HTML (token weight)
+- `cookie`: testo visibile al 11% dell'HTML (token weight)
 - `domiciliazioni`: testo visibile al 9% dell'HTML (token weight)
 - `index`: testo visibile al 14% dell'HTML (token weight)
 - `strumenti`: testo visibile al 13% dell'HTML (token weight)
 - `strumento-calcolo-imposta-successione`: testo visibile al 15% dell'HTML (token weight)
 - `strumento-calcolo-quote-eredita`: testo visibile al 14% dell'HTML (token weight)
 - `strumento-scadenze-multa`: testo visibile al 13% dell'HTML (token weight)
-- `studio`: testo visibile al 14% dell'HTML (token weight)
+- `studio`: testo visibile al 13% dell'HTML (token weight)
 
 ## Note
 

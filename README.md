@@ -14,6 +14,9 @@ Sorgente del sito https://studiolegalepernorio.com (Netlify, progetto `studioleg
 - `functions/mcp.mjs`: server MCP generato dalla build (non modificarlo a mano)
 - `tools/immagini_og.mjs`: immagini di anteprima 1200x630 per ogni pagina (`node tools/immagini_og.mjs` dopo la build, scrive `static/og/`)
 - `tools/social.mjs`: caroselli Instagram e piano editoriale (`social/`)
+- `tools/ricerche.py`: sezioni, FAQ e title scritti sulle ricerche reali di Search Console; testi del riquadro "Il suo caso" nelle guide
+- `tools/misura/`: misura senza cookie (provenienza delle visite, clic su Chiama/WhatsApp, visite dalle IA). Script `conta.js`, funzione `/api/conta` e `/api/statistiche` (Netlify Blobs), pagina riservata `/statistiche#k=CHIAVE`. In `chiave.sha256` c'è solo l'impronta della chiave, non la chiave
+- `netlify/edge-functions/bot-ia.js`: conta le letture dei bot delle IA (gira solo per i loro user-agent)
 - `dati/`: misure di visibilità nelle IA
 - `ELENCHI.md`: dati identici da usare su Google, Bing, Apple, OpenStreetMap e negli elenchi
 - `netlify/`: `_redirects` e `_headers`
@@ -22,9 +25,10 @@ Sorgente del sito https://studiolegalepernorio.com (Netlify, progetto `studioleg
 ## Build e pubblicazione
 
 ```
-python3 tools/build.py          # genera dist/
+npm install                     # una volta: dipendenze delle funzioni (@netlify/blobs)
+python3 tools/build.py          # genera dist/ e functions/
 python3 tools/audit.py          # controlla dist/ e scrive AUDIT.md
-netlify deploy --dir dist --functions functions --prod   # pubblica sito + server MCP (il trascinamento di dist/ pubblica solo il sito, senza /mcp)
+netlify deploy --prod           # dalla radice: usa netlify.toml (dist, functions, edge functions). Il trascinamento di dist/ pubblica solo il sito, senza /mcp né misura
 python3 tools/indexnow.py       # dopo la pubblicazione
 ```
 

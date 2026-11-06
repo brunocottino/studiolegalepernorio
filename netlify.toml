@@ -1,0 +1,7 @@
+# Pubblicazione dalla radice del repository (CLI o MCP di Netlify).
+# Prima: python3 tools/build.py && npm install
+[build]
+  publish = "dist"
+  command = ""
+  functions = "functions"
+  edge_functions = "netlify/edge-functions"

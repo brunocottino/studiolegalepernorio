@@ -785,6 +785,15 @@ def fix_contatti(s):
     return s
 
 
+MISURA_TXT = ("<p><b>Misura delle visite, senza cookie.</b> Il sito conta in forma aggregata da dove arrivano le visite "
+              "(per esempio Google, la scheda Google dello Studio, ChatGPT o altri assistenti IA) e quante volte vengono toccati i pulsanti "
+              "Chiama, WhatsApp e invio dei moduli. Per ogni evento registra solo il tipo, la pagina, la provenienza e l'ora: nessun cookie, "
+              "nessun indirizzo IP, nessun identificativo del dispositivo. La provenienza resta nel browser solo per la durata della visita "
+              "(sessionStorage) e si cancella chiudendo la scheda. I dati sono conservati su Netlify, Inc. e servono solo allo Studio "
+              "per capire quali pagine sono utili. Conta inoltre, lato server, le letture delle pagine da parte dei programmi automatici "
+              "delle intelligenze artificiali.</p>\n")
+
+
 def fix_privacy(s):
     add = ("<p><b>Colloqui a distanza.</b> Con il modulo di richiesta di colloquio online si possono inviare documenti, conservati "
            "dal fornitore del modulo (Netlify, Inc.) per il tempo necessario a gestire la richiesta e poi trasferiti nel fascicolo dello Studio. "
@@ -795,10 +804,13 @@ def fix_privacy(s):
            "Il servizio per assistenti IA all'indirizzo /mcp e gli strumenti WebMCP restituiscono solo informazioni pubbliche e calcoli: "
            "non chiedono e non conservano dati personali, salvo i normali registri tecnici del fornitore di hosting (Netlify, Inc.). "
            "La funzione che prepara una richiesta di contatto si limita a precompilare il modulo nel browser: l'invio resta sempre una scelta della persona.</p>\n")
-    return s.replace("<p><b>Diritti.</b>", add + "<p><b>Diritti.</b>", 1)
+    return s.replace("<p><b>Diritti.</b>", add + MISURA_TXT + "<p><b>Diritti.</b>", 1)
 
 
 def fix_cookie(s):
+    s = s.replace("<p>Il sito non usa cookie di profilazione né strumenti di statistica.",
+                  "<p>Il sito non usa cookie, né di profilazione né di statistica. Per sapere da dove arrivano le visite usa una misura "
+                  "propria senza cookie, descritta nell'<a href='/privacy'>informativa privacy</a>.", 1)
     return s.replace(
         "I caratteri tipografici sono forniti dal servizio Google Fonts: per scaricarli il browser si collega ai server di Google, che ricevono l'indirizzo IP del visitatore.",
         "I caratteri tipografici sono ospitati direttamente sul sito: il browser non si collega a servizi esterni per scaricarli.",
@@ -883,7 +895,7 @@ DESC_NUOVE = {
     "index": "Avv. Daniela Pernorio, avvocato civilista a Vigevano (PV): separazioni e divorzi, figli, eredità, sfratti, debiti con banche. Tribunale di Pavia.",
     "diritto-di-famiglia": "Separazione, divorzio, affidamento e mantenimento dei figli, unioni civili e convivenze: l'Avv. Daniela Pernorio a Vigevano, Tribunale di Pavia.",
     "guide": "Guide pratiche dell'Avv. Daniela Pernorio su famiglia, eredità, casa, debiti, lavoro e multe: risposte chiare, fonti di legge e casi frequenti.",
-    "cookie": "Informativa cookie dello Studio Legale Pernorio di Vigevano: il sito non installa cookie, non usa profilazione né strumenti di statistica.",
+    "cookie": "Informativa cookie dello Studio Legale Pernorio di Vigevano: nessun cookie, nessuna profilazione; le visite sono contate in forma aggregata.",
     "privacy": "Informativa privacy dello Studio Legale Pernorio, Vigevano: quali dati raccoglie il sito con i moduli di contatto, perché e per quanto tempo.",
     "attivita": "Le 18 materie dell'Avv. Daniela Pernorio, avvocato civilista a Vigevano: famiglia e figli, eredità, casa e affitti, debiti, contratti, incidenti, lavoro.",
     "domiciliazioni": "Domiciliazioni e sostituzioni d'udienza per colleghi avvocati presso i Tribunali di Pavia, Milano e Novara e il Giudice di Pace di Vigevano.",
@@ -1067,7 +1079,7 @@ def fix_agenti(s, slug):
         s = s.replace("</body>", "".join(ld(n) for n in nodi) + "\n</body>", 1)
     testa = f'<link rel="alternate" type="text/markdown" href="{AG.md_di(slug)}" title="Versione Markdown per assistenti IA">'
     s = s.replace('<link rel="manifest"', testa + '<link rel="manifest"', 1)
-    s = s.replace("</body>", '<script src="/agenti.js" defer></script>\n' + SPECULATION + "\n</body>", 1)
+    s = s.replace("</body>", '<script src="/agenti.js" defer></script><script src="/conta.js" defer></script>\n' + SPECULATION + "\n</body>", 1)
     if slug == "contatti":
         s = AG.modulo_webmcp(s)
     return s
@@ -1229,6 +1241,14 @@ def main():
     with open(os.path.join(DIST, "site.webmanifest"), "w", encoding="utf-8") as fh:
         fh.write(m)
 
+    # Misura senza cookie: script, pagina riservata e funzione
+    MIS = os.path.join(ROOT, "tools", "misura")
+    for fn in ("conta.js", "statistiche.js", "statistiche.html"):
+        shutil.copy(os.path.join(MIS, fn), os.path.join(DIST, fn))
+    hash_chiave = open(os.path.join(MIS, "chiave.sha256")).read().strip()
+    with open(os.path.join(FUNZIONI, "conta.mjs"), "w", encoding="utf-8") as fh:
+        fh.write(open(os.path.join(MIS, "conta.mjs"), encoding="utf-8").read().replace("__HASH_CHIAVE__", hash_chiave))
+
     # Redirect e header Netlify
     shutil.copy(os.path.join(ROOT, "netlify", "_redirects"), os.path.join(DIST, "_redirects"))
     with open(os.path.join(DIST, "_redirects"), "a", encoding="utf-8") as fh:
@@ -1236,6 +1256,7 @@ def main():
     shutil.copy(os.path.join(ROOT, "netlify", "_headers"), os.path.join(DIST, "_headers"))
     with open(os.path.join(DIST, "_headers"), "a", encoding="utf-8") as fh:
         fh.write("\n# Generato da tools/build.py\n/*\n  Content-Security-Policy: " + csp(tutte) + "\n")
+        fh.write("\n/statistiche*\n  X-Robots-Tag: noindex, nofollow\n  Cache-Control: no-store\n")
     shutil.copy(os.path.join(ROOT, "netlify", "netlify.toml"), os.path.join(DIST, "netlify.toml"))
 
     print(f"Build completato: {len(tutte)} pagine ({len(nuove)} nuove), {len(urls)} URL in sitemap -> {DIST}")

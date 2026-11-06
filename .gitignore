@@ -2,3 +2,4 @@ dist/
 .netlify
 __pycache__/
 functions/
+node_modules/

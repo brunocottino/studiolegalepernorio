@@ -1,0 +1,9 @@
+{
+  "name": "studiolegalepernorio",
+  "private": true,
+  "description": "Sito dello Studio Legale Pernorio: dipendenze delle Netlify Functions",
+  "type": "module",
+  "dependencies": {
+    "@netlify/blobs": "11.1.8"
+  }
+}

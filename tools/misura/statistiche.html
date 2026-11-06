@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Statistiche · Studio Pernorio</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/style.css">
+<style>
+.st{max-width:960px;margin:0 auto;padding:28px 16px 80px}
+.st h1{font-size:2.2rem;margin:6px 0 4px}
+.st h2{font-size:1.5rem;margin:0 0 12px}
+.st .sub{color:var(--graphite);margin:0 0 18px}
+.st .sel{display:flex;gap:8px;margin:0 0 20px;flex-wrap:wrap}
+.st .sel button{font:inherit;padding:8px 16px;border-radius:999px;border:1px solid var(--rule);background:var(--card);color:var(--ink);cursor:pointer}
+.st .sel button[aria-pressed="true"]{background:var(--forest);color:var(--on-dark);border-color:var(--forest)}
+.st .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:16px}
+.st .tile{background:var(--card);border:1px solid var(--rule);border-radius:18px;padding:16px 18px;display:flex;flex-direction:column;gap:2px}
+.st .tile b{font-family:var(--display);font-weight:500;font-size:2.4rem;line-height:1}
+.st .tile span{font-size:.92rem}
+.st .tile small{color:var(--graphite);font-size:.8rem}
+.st .box{background:var(--card);border:1px solid var(--rule);border-radius:18px;padding:18px;margin-bottom:14px;overflow-x:auto}
+.st .two{display:grid;grid-template-columns:1fr;gap:14px}
+@media (min-width:760px){.st .two{grid-template-columns:1fr 1fr}.st .two .box{margin:0}}
+.st table{width:100%;border-collapse:collapse;font-size:.92rem}
+.st th{text-align:left;font-weight:500;color:var(--graphite);font-size:.78rem;letter-spacing:.04em;text-transform:uppercase;padding:0 0 6px}
+.st td{padding:7px 0;border-top:1px solid var(--rule);position:relative}
+.st td:first-child{padding-right:10px}
+.st .n{text-align:right;font-variant-numeric:tabular-nums;width:4em}
+.st .barra{position:absolute;left:0;top:3px;bottom:3px;width:var(--w);background:color-mix(in srgb,var(--forest) 12%,transparent);border-radius:6px;z-index:-1}
+.st td{z-index:0}
+.st .vuoto,.st .nota{color:var(--graphite);margin:4px 0 0}
+.st .giorni{display:flex;align-items:flex-end;gap:2px;height:120px;margin-top:8px}
+.st .giorni .col{flex:1;height:100%;display:flex;align-items:flex-end}
+.st .giorni i{display:flex;align-items:flex-end;width:100%;min-height:1px;background:color-mix(in srgb,var(--forest) 35%,transparent);border-radius:3px 3px 0 0}
+.st .giorni em{display:block;width:100%;background:var(--brass);border-radius:3px 3px 0 0}
+.st .leg{display:flex;gap:16px;font-size:.82rem;color:var(--graphite);margin-top:8px}
+.st .leg span::before{content:"";display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px;background:color-mix(in srgb,var(--forest) 35%,transparent)}
+.st .leg span.ia::before{background:var(--brass)}
+.st #stato{color:var(--graphite)}
+</style>
+</head>
+<body>
+<main class="st">
+<span class="label">Riservato</span>
+<h1>Statistiche del sito</h1>
+<p class="sub" id="periodo">Misura senza cookie: provenienza delle visite e clic su Chiama e WhatsApp.</p>
+<div class="sel" role="group" aria-label="Periodo">
+<button type="button" data-giorni="7" aria-pressed="false">7 giorni</button>
+<button type="button" data-giorni="30" aria-pressed="true">30 giorni</button>
+<button type="button" data-giorni="90" aria-pressed="false">90 giorni</button>
+</div>
+<p id="stato">Carico…</p>
+<div id="dati" hidden>
+<div class="tiles" id="tiles"></div>
+<div class="box"><h2>Visite al giorno</h2><div class="giorni" id="giorni"></div><div class="leg"><span>Tutte le visite</span><span class="ia">Arrivate da un'IA</span></div></div>
+<div class="two">
+<div class="box"><h2>Da dove arrivano</h2><div id="fonti"></div></div>
+<div class="box"><h2>Contatti dal sito</h2><div id="contatti"></div></div>
+</div>
+<div class="box" style="margin-top:14px"><h2>Visite dalle IA</h2><div id="paginaIA"></div></div>
+<div class="two">
+<div class="box"><h2>Bot IA che leggono il sito</h2><div id="bot"></div></div>
+<div class="box"><h2>Pagine più lette dai bot</h2><div id="botPagine"></div></div>
+</div>
+<p class="vuoto" style="margin-top:14px">Le chiamate fatte dal pulsante della scheda Google non passano dal sito: si vedono in Google Business Profile, alla voce Rendimento.</p>
+</div>
+</main>
+<script src="/statistiche.js"></script>
+</body>
+</html>
