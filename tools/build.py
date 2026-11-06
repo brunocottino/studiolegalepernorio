@@ -19,6 +19,7 @@ sys.path.insert(0, os.path.dirname(__file__))
 import contenuti as C  # noqa: E402
 import guide_nuove as G  # noqa: E402
 import colloquio as CO  # noqa: E402
+import agenti as AG  # noqa: E402
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SRC = os.path.join(ROOT, "src")
@@ -787,6 +788,91 @@ def build_css():
 
 
 # ---------------------------------------------------------------------------
+# Agenti IA: grafo delle entità, versione Markdown, WebMCP (vedi tools/agenti.py)
+# ---------------------------------------------------------------------------
+
+def dati_studio():
+    return {
+        "nome": "Studio Legale Pernorio",
+        "avvocato": "Avv. Daniela Pernorio, avvocato civilista iscritta all'Ordine degli Avvocati di Pavia dal 2014",
+        "indirizzo": "Via Egidio Sacchetti 14, 27029 Vigevano (PV), Italia",
+        "telefono": "+39 0381 386276",
+        "whatsapp": "https://wa.me/393333368757",
+        "instagram": INSTAGRAM,
+        "orari": ORARI_TXT,
+        "tribunali": ["Pavia", "Milano", "Novara"],
+        "primo_colloquio": "In Studio a Vigevano oppure online in videochiamata, su appuntamento; preventivo scritto prima di iniziare.",
+        "contatti": clean_url("contatti"),
+        "colloquio_online": clean_url(CO.SLUG),
+        "costi": clean_url("costi-avvocato"),
+        "materie": [{"nome": v[0].upper() + v[1:], "url": clean_url("attivita-" + k)} for k, v in MATERIE_KW.items()],
+        "comuni_serviti": [{"nome": "Vigevano", "url": BASE + "/"}] + [
+            {"nome": c["nome"], "distanza": c["km"], "url": clean_url(c["slug"])} for c in C.COMUNI],
+        "avvertenza": "Informazioni generali: ogni caso va valutato sui documenti con l'avvocato.",
+    }
+
+
+DESC_NUOVE = {
+    "attivita": "Le 18 materie dell'Avv. Daniela Pernorio, avvocato civilista a Vigevano: famiglia e figli, eredità, casa e affitti, debiti, contratti, incidenti, lavoro.",
+    "domiciliazioni": "Domiciliazioni e sostituzioni d'udienza per colleghi avvocati presso i Tribunali di Pavia, Milano e Novara e il Giudice di Pace di Vigevano.",
+}
+
+
+def fix_agenti(s, slug):
+    if slug in DESC_NUOVE:
+        d = esc(DESC_NUOVE[slug])
+        s = re.sub(r'<meta name="description" content="[^"]*">', f'<meta name="description" content="{d}">', s, count=1)
+        s = re.sub(r'<meta property="og:description" content="[^"]*">', f'<meta property="og:description" content="{d}">', s, count=1)
+    title = html.unescape(re.search(r"<title>(.*?)</title>", s, re.S).group(1).strip())
+    m = re.search(r'<meta name="description" content="([^"]*)">', s)
+    desc = html.unescape(m.group(1)) if m else ""
+    url = clean_url(slug)
+
+    def bc(mm):
+        d = json.loads(mm.group(1))
+        if isinstance(d, dict) and d.get("@type") == "BreadcrumbList":
+            d["@id"] = url + "#percorso"
+        return ld(d)
+    s = re.sub(r'<script type="application/ld\+json">(.*?)</script>', bc, s, flags=re.S)
+    nodi = []
+    if url + "#pagina" not in s:
+        n = AG.nodo_pagina(slug, title, desc, OGGI)
+        if url + "#percorso" not in s:
+            del n["breadcrumb"]
+        nodi.append(n)
+    if slug.startswith("attivita-"):
+        kw = MATERIE_KW[slug[len("attivita-"):]]
+        nodi.append(AG.nodo_servizio(slug, "Avvocato per " + kw, url))
+    if nodi:
+        s = s.replace("</body>", "".join(ld(n) for n in nodi) + "\n</body>", 1)
+    testa = f'<link rel="alternate" type="text/markdown" href="{AG.md_di(slug)}" title="Versione Markdown per assistenti IA">'
+    s = s.replace('<link rel="manifest"', testa + '<link rel="manifest"', 1)
+    s = s.replace("</body>", '<script src="/agenti.js" defer></script>\n</body>', 1)
+    if slug == "contatti":
+        s = AG.modulo_webmcp(s)
+    return s
+
+
+def scrivi_agenti(tutte, indicizzabili):
+    """File per agenti: Markdown di ogni pagina, indice di ricerca, agenti.js, robots.txt."""
+    indice = []
+    for slug in indicizzabili:
+        s = tutte[slug]
+        with open(os.path.join(DIST, AG.md_di(slug).lstrip("/")), "w", encoding="utf-8") as fh:
+            fh.write(AG.pagina_md(slug, s, OGGI))
+        t = html.unescape(re.search(r"<title>(.*?)</title>", s, re.S).group(1).strip())
+        m = re.search(r'<meta name="description" content="([^"]*)">', s)
+        h2 = " ".join(html.unescape(re.sub(r"<[^>]+>", "", x)) for x in re.findall(r"<h2[^>]*>(.*?)</h2>", s, re.S))
+        indice.append({"t": t, "d": html.unescape(m.group(1)) if m else "", "k": h2[:600], "u": clean_url(slug), "m": BASE + AG.md_di(slug)})
+    with open(os.path.join(DIST, "cerca.json"), "w", encoding="utf-8") as fh:
+        json.dump(indice, fh, ensure_ascii=False, separators=(",", ":"))
+    with open(os.path.join(DIST, "agenti.js"), "w", encoding="utf-8") as fh:
+        fh.write(AG.agenti_js(dati_studio()))
+    with open(os.path.join(DIST, "robots.txt"), "w", encoding="utf-8") as fh:
+        fh.write(AG.ROBOTS)
+
+
+# ---------------------------------------------------------------------------
 
 def main():
     if os.path.isdir(DIST):
@@ -836,6 +922,8 @@ def main():
         s = fix_head(s, slug, noindex=slug in ("404", "grazie"))
         s = fix_nav(s)
         s = fix_footer(s)
+        if slug not in ("404", "grazie"):
+            s = fix_agenti(s, slug)
         tutte[slug] = s
         with open(os.path.join(DIST, slug + ".html"), "w", encoding="utf-8") as fh:
             fh.write(s)
@@ -852,11 +940,8 @@ def main():
     with open(os.path.join(DIST, "sitemap.xml"), "w", encoding="utf-8") as fh:
         fh.write('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' + "\n".join(urls) + "\n</urlset>\n")
 
-    # robots.txt
-    r = open(os.path.join(SRC, "robots.txt"), encoding="utf-8").read()
-    r = re.sub(r"Sitemap: .*", f"Sitemap: {BASE}/sitemap.xml", r)
-    with open(os.path.join(DIST, "robots.txt"), "w", encoding="utf-8") as fh:
-        fh.write(r)
+    # robots.txt, Markdown, indice di ricerca e WebMCP
+    scrivi_agenti(tutte, [x for x in tutte if x not in esclusi])
 
     # llms.txt e llms-full.txt
     for fn in ("llms.txt", "llms-full.txt"):
@@ -871,6 +956,10 @@ def main():
             t += "\n## Nuove guide\n\n" + "".join(f"- [{g['titolo']}]({clean_url(g['slug'])}): {g['sommario']}\n" for g in G.GUIDE)
             t += "\n## Strumenti\n\n"
             t += "".join(f"- [{x['titolo_breve']}]({clean_url(x['slug'])}): {x['intro']}\n" for x in C.STRUMENTI)
+            t += ("\n## Per agenti e assistenti IA\n\n"
+                  f"- Ogni pagina ha una versione Markdown: aggiungere .md all'indirizzo (es. {BASE}/attivita-separazione-divorzio.md, home: {BASE}/index.md)\n"
+                  f"- [Indice di ricerca JSON]({BASE}/cerca.json): titolo, descrizione, URL e versione Markdown di ogni pagina\n"
+                  "- Strumenti WebMCP nel browser (document.modelContext): informazioni-studio, cerca-nel-sito, calcola-quote-eredita, scadenze-multa, prepara-richiesta-allo-studio (non invia nulla senza il click della persona)\n")
         with open(os.path.join(DIST, fn), "w", encoding="utf-8") as fh:
             fh.write(t)
 

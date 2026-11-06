@@ -17,3 +17,15 @@
 
 /llms-full.txt
   Content-Type: text/plain; charset=utf-8
+
+/*.md
+  Content-Type: text/markdown; charset=utf-8
+  X-Robots-Tag: noindex
+  Access-Control-Allow-Origin: *
+
+/cerca.json
+  Access-Control-Allow-Origin: *
+  Cache-Control: public, max-age=3600
+
+/agenti.js
+  Cache-Control: public, max-age=3600
