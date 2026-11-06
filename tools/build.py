@@ -21,6 +21,7 @@ import guide_nuove as G  # noqa: E402
 import colloquio as CO  # noqa: E402
 import agenti as AG  # noqa: E402
 import fonti as FO  # noqa: E402
+import ricerche as RI  # noqa: E402
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SRC = os.path.join(ROOT, "src")
@@ -880,6 +881,19 @@ DESC_NUOVE = {
     "domiciliazioni": "Domiciliazioni e sostituzioni d'udienza per colleghi avvocati presso i Tribunali di Pavia, Milano e Novara e il Giudice di Pace di Vigevano.",
 }
 
+TITOLI_NUOVI.update(RI.TITOLI)
+DESC_NUOVE.update(RI.DESCRIZIONI)
+
+# Fonti normative aggiunte dopo l'analisi delle ricerche
+FO.ATTI.setdefault("urn:nir:stato:decreto.legislativo:1993-09-01;385", "D.Lgs. 1 settembre 1993, n. 385 (Testo unico bancario)")
+_ATTO = {"cc": FO.CC, "cpc": FO.CPC, "tub": "urn:nir:stato:decreto.legislativo:1993-09-01;385"}
+for _slug, _lst in RI.FONTI_EXTRA.items():
+    _gia = {x["urn"] for x in FO.FONTI.get(_slug, [])}
+    for _et, _a, _art in _lst:
+        _f = FO.f(_et, _ATTO[_a], _art)
+        if _f["urn"] not in _gia:
+            FO.FONTI.setdefault(_slug, []).append(_f)
+
 
 # Navigazione istantanea: il browser precarica la pagina quando il dito o il mouse
 # si avvicina al link (Speculation Rules, Chrome/Edge; ignorato dagli altri browser).
@@ -911,12 +925,49 @@ def calcola_correlate(pagine):
         CORRELATE[a] = [(b, re.sub(r"<[^>]+>", "", titoli[b]).strip()) for _, b in sim]
 
 
+def applica_ricerche(s, slug):
+    """Sezioni, FAQ e date aggiornate per le pagine viste in Search Console (tools/ricerche.py)."""
+    if slug in RI.TITOLI:
+        s = re.sub(r'<meta property="og:title" content="[^"]*">', f'<meta property="og:title" content="{esc(RI.TITOLI[slug])}">', s, count=1)
+    sez = RI.SEZIONI.get(slug)
+    faq = RI.FAQ.get(slug)
+    if not (sez or faq) or "</article>" not in s:
+        return s
+    firma = '<p class="note-s">A cura dello Studio Legale Pernorio'
+    if sez:
+        i = s.rfind(firma)
+        i = i if i != -1 else s.rfind("</article>")
+        s = s[:i] + sez.strip() + "\n" + s[i:]
+    s = re.sub(r"(Aggiornato a )ottobre 2026", r"\g<1>" + RI.AGGIORNATO, s)
+    s = re.sub(r'"dateModified": "[^"]*"', f'"dateModified": "{OGGI}"', s)
+    if faq:
+        det = "".join(f"<details><summary>{esc(q)}</summary><p>{esc(a)}</p></details>" for q, a in faq)
+        box = (f'<div class="card panel faq rv" style="margin-top:14px"><h2>Domande frequenti</h2>{det}</div>' + ld(faq_ld(faq)))
+        i = s.rfind("</article>") + len("</article>")
+        s = s[:i] + box + s[i:]
+    return s
+
+
+def redirects(tutte):
+    """301 da /pagina.html a /pagina (Search Console vede entrambe) e dai vecchi indirizzi."""
+    righe = ["", "# Generato da tools/build.py: una sola versione per pagina, senza .html"]
+    for vecchio, nuovo in RI.VECCHI_URL.items():
+        righe.append(f"{vecchio}  {nuovo}  301!")
+    for slug in sorted(tutte):
+        if slug in ("index", "404"):
+            continue
+        righe.append(f"/{slug}.html  /{slug}  301!")
+    return "\n".join(righe) + "\n"
+
+
 def titolo_corto(t, n=65):
     """Title entro n caratteri (Google taglia oltre ~600 px): si accorcia la firma, mai il tema."""
     base = t.split(" · ")[0]
     if len(t) <= n:
         return t
     for suff in (" · Studio Pernorio, Vigevano", " · Studio Pernorio", " · Vigevano", ""):
+        if "Vigevano" in base and "Vigevano" in suff:
+            continue
         if len(base + suff) <= n:
             return base + suff
     return base
@@ -1085,6 +1136,7 @@ def main():
             s = fix_indice_guide(s)
         elif slug == "studio":
             s = fix_studio(s)
+        s = applica_ricerche(s, slug)
         s = fix_orari_social(s)
         s = fix_urls(s)
         s = fix_ld(s)
@@ -1140,6 +1192,8 @@ def main():
 
     # Redirect e header Netlify
     shutil.copy(os.path.join(ROOT, "netlify", "_redirects"), os.path.join(DIST, "_redirects"))
+    with open(os.path.join(DIST, "_redirects"), "a", encoding="utf-8") as fh:
+        fh.write(redirects(tutte))
     shutil.copy(os.path.join(ROOT, "netlify", "_headers"), os.path.join(DIST, "_headers"))
     with open(os.path.join(DIST, "_headers"), "a", encoding="utf-8") as fh:
         fh.write("\n# Generato da tools/build.py\n/*\n  Content-Security-Policy: " + csp(tutte) + "\n")
