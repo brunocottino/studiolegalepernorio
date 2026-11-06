@@ -938,6 +938,13 @@ def fix_agenti(s, slug):
     if slug.startswith("attivita-"):
         kw = MATERIE_KW[slug[len("attivita-"):]]
         nodi.append(AG.nodo_servizio(slug, "Avvocato per " + kw, url))
+    if os.path.exists(os.path.join(STATIC, "og", slug + ".jpg")):
+        img = f"{BASE}/og/{slug}.jpg"
+        s = re.sub(r'<meta property="og:image" content="[^"]*">', "", s)
+        s = re.sub(r'<meta name="twitter:image" content="[^"]*">', "", s)
+        s = s.replace('<link rel="icon"', f'<meta property="og:image" content="{img}"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="{esc(title)}"><meta name="twitter:image" content="{img}">\n<link rel="icon"', 1)
+        if nodi:
+            nodi[0]["primaryImageOfPage"] = {"@type": "ImageObject", "url": img, "width": 1200, "height": 630}
     if nodi:
         s = s.replace("</body>", "".join(ld(n) for n in nodi) + "\n</body>", 1)
     testa = f'<link rel="alternate" type="text/markdown" href="{AG.md_di(slug)}" title="Versione Markdown per assistenti IA">'
@@ -946,6 +953,32 @@ def fix_agenti(s, slug):
     if slug == "contatti":
         s = AG.modulo_webmcp(s)
     return s
+
+
+def csp(tutte):
+    """Content-Security-Policy rigorosa: solo script del sito e script interni elencati per hash."""
+    import base64
+    import hashlib
+    hs = set()
+    for h in tutte.values():
+        for m in re.finditer(r'<script(?: type="speculationrules")?>(.*?)</script>', h, re.S):
+            hs.add("'sha256-" + base64.b64encode(hashlib.sha256(m.group(1).encode()).digest()).decode() + "'")
+    handler = "'sha256-" + base64.b64encode(hashlib.sha256(b"return false").digest()).decode() + "'"
+    return "; ".join([
+        "default-src 'self'",
+        "script-src 'self' " + " ".join(sorted(hs)) + " 'unsafe-hashes' " + handler,
+        "style-src 'self' 'unsafe-inline'",
+        "img-src 'self' data: blob:",
+        "font-src 'self'",
+        "connect-src 'self'",
+        "media-src 'self' blob: mediastream:",
+        "frame-src 'none'",
+        "object-src 'none'",
+        "base-uri 'self'",
+        "form-action 'self'",
+        "frame-ancestors 'self'",
+        "upgrade-insecure-requests",
+    ])
 
 
 def scrivi_agenti(tutte, indicizzabili):
@@ -983,6 +1016,8 @@ def main():
         shutil.rmtree(DIST)
     shutil.copytree(SRC, DIST)
     shutil.copytree(os.path.join(STATIC, "fonts"), os.path.join(DIST, "fonts"))
+    if os.path.isdir(os.path.join(STATIC, "og")):
+        shutil.copytree(os.path.join(STATIC, "og"), os.path.join(DIST, "og"))
     for fn in os.listdir(os.path.join(STATIC, "root")):
         shutil.copy(os.path.join(STATIC, "root", fn), os.path.join(DIST, fn))
     os.remove(os.path.join(DIST, "fonts", "fonts.css"))
@@ -1077,6 +1112,8 @@ def main():
     # Redirect e header Netlify
     shutil.copy(os.path.join(ROOT, "netlify", "_redirects"), os.path.join(DIST, "_redirects"))
     shutil.copy(os.path.join(ROOT, "netlify", "_headers"), os.path.join(DIST, "_headers"))
+    with open(os.path.join(DIST, "_headers"), "a", encoding="utf-8") as fh:
+        fh.write("\n# Generato da tools/build.py\n/*\n  Content-Security-Policy: " + csp(tutte) + "\n")
     shutil.copy(os.path.join(ROOT, "netlify", "netlify.toml"), os.path.join(DIST, "netlify.toml"))
 
     print(f"Build completato: {len(tutte)} pagine ({len(nuove)} nuove), {len(urls)} URL in sitemap -> {DIST}")

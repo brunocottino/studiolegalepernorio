@@ -9,6 +9,7 @@ i tempi di indicizzazione da giorni a ore.
 Uso:
     python3 tools/indexnow.py            # tutti gli URL della sitemap in dist/
     python3 tools/indexnow.py --prova    # mostra cosa invierebbe, senza inviare
+    python3 tools/indexnow.py --online   # usa la sitemap già pubblicata (non quella di dist/)
 """
 import json
 import os
@@ -25,7 +26,11 @@ def main():
     if not chiavi:
         sys.exit("Chiave IndexNow non trovata in static/root/")
     key = chiavi[0][:-4]
-    sm = open(os.path.join(ROOT, "dist", "sitemap.xml"), encoding="utf-8").read()
+    if "--online" in sys.argv:
+        with urllib.request.urlopen(f"https://{HOST}/sitemap.xml", timeout=30) as r:
+            sm = r.read().decode("utf-8")
+    else:
+        sm = open(os.path.join(ROOT, "dist", "sitemap.xml"), encoding="utf-8").read()
     urls = re.findall(r"<loc>(.*?)</loc>", sm)
     corpo = {"host": HOST, "key": key, "keyLocation": f"https://{HOST}/{key}.txt", "urlList": urls}
     print(f"{len(urls)} URL, chiave {key}")

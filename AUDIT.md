@@ -43,9 +43,12 @@ Pagine HTML: 69, indicizzabili: 67.
 - `index`: description di 161 caratteri (ideale 70-160)
 - `privacy`: description di 20 caratteri (ideale 70-160)
 
-## Info (11)
+## Info (14)
 
-- `attivita-lavoro`: testo visibile al 15% dell'HTML (token weight)
+- `attivita-condominio`: testo visibile al 15% dell'HTML (token weight)
+- `attivita-contratti`: testo visibile al 15% dell'HTML (token weight)
+- `attivita-lavoro`: testo visibile al 14% dell'HTML (token weight)
+- `attivita-sinistri-responsabilita`: testo visibile al 15% dell'HTML (token weight)
 - `attivita`: testo visibile al 12% dell'HTML (token weight)
 - `contatti`: testo visibile al 12% dell'HTML (token weight)
 - `cookie`: testo visibile al 11% dell'HTML (token weight)
@@ -54,7 +57,7 @@ Pagine HTML: 69, indicizzabili: 67.
 - `strumenti`: testo visibile al 13% dell'HTML (token weight)
 - `strumento-calcolo-imposta-successione`: testo visibile al 15% dell'HTML (token weight)
 - `strumento-calcolo-quote-eredita`: testo visibile al 14% dell'HTML (token weight)
-- `strumento-scadenze-multa`: testo visibile al 14% dell'HTML (token weight)
+- `strumento-scadenze-multa`: testo visibile al 13% dell'HTML (token weight)
 - `studio`: testo visibile al 14% dell'HTML (token weight)
 
 ## Note

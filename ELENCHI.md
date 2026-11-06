@@ -23,6 +23,14 @@ Perché conta: secondo un'analisi di Yext su 6,8 milioni di citazioni in ChatGPT
 **Descrizione lunga** (meno di 750 caratteri, adatta anche a Google):
 > Lo Studio Legale Pernorio, a Vigevano in Via Egidio Sacchetti 14, è lo studio dell'Avv. Daniela Pernorio, avvocato civilista iscritta all'Ordine degli Avvocati di Pavia. Si occupa di separazioni e divorzi, affidamento e mantenimento dei figli, unioni civili e convivenze, successioni ed eredità, amministrazione di sostegno, affitti, sfratti, condominio, usucapione, saldo e stralcio con banche e finanziarie, recupero crediti, contratti, incidenti stradali, multe e diritto del lavoro. Assiste clienti di Vigevano, della Lomellina e dell'Abbiatense davanti ai Tribunali di Pavia, Milano e Novara. Primo colloquio su appuntamento, in Studio o in videochiamata, con preventivo scritto prima di iniziare.
 
+## Correzioni urgenti, dalla misura del 6/11/2026 (vedi `dati/visibilita-2026-11-06.md`)
+
+Sono le schede che le IA citano oggi al posto del sito:
+
+1. **Dequo** (dequo.it): è la fonte più citata dalle IA per "avvocato separazione Vigevano" e "successioni Vigevano", e lo Studio non c'è. Iscrizione: https://www.dequo.it/area-personale/registrazione-avvocato. Materie: Separazioni e divorzi, Successioni, Diritto civile, Locazioni. Descrizione lunga qui sotto.
+2. **Lawzana** (lawzana.com/estate-planning-lawyers/vigevano): descrive lo Studio come "civile e penale". Va rivendicata o corretta, indicando le 18 materie civili e il sito.
+3. **Virgilio e Pagine Bianche** (aziende.virgilio.it, paginebianche.it, entrambi di Italiaonline): il nome è "Avvocato pernorio daniela". Va cambiato in "Studio Legale Pernorio - Avv. Daniela Pernorio", con il sito e la categoria. Si fa dal pannello Italiaonline per le aziende: https://www.italiaonline.it
+
 ## Dove inserirlo, in ordine di impatto
 
 | # | Piattaforma | Perché | Link |

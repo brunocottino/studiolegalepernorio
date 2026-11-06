@@ -91,3 +91,20 @@ Limite deontologico sempre valido: i testi restano informativi (art. 17 e 35 del
 - https://bndy.org/posts/chatgpt-attribution-mapbox-openstreetmap/
 - https://www.normattiva.it/staticPage/utilita (link URN)
 - https://github.com/Sanrovax/ai-visibility-checker
+
+---
+
+# Terzo giro: lavoro fatto in autonomia (6 novembre 2026)
+
+- **Misura della visibilità** nella ricerca web di Claude, con domande da cliente: per le domande generiche lo Studio non compare, compaiono gli elenchi (Dequo, Virgilio, Lawzana). Dettagli in `dati/visibilita-2026-11-06.md`. Lawzana ha dati sbagliati. Le chiavi API per misurare ChatGPT e Gemini non sono state fornite.
+- **IndexNow inviato** per le 66 pagine già online (risposta 200): Bing, Yandex, Seznam e Naver sono avvisati. Nessuna pubblicazione di contenuti nuovi.
+- **Immagini di anteprima per ogni pagina** (67, 1200x630) in `static/og/`, collegate con og:image e twitter:image e nel nodo `primaryImageOfPage`. Quando un link viene condiviso su WhatsApp, Facebook o LinkedIn mostra il titolo della pagina e il volto dell'avvocata, non più la stessa immagine per tutte.
+- **14 caroselli Instagram** (5 immagini ciascuno, 4:5) dalle guide, con didascalie, hashtag e post per la scheda Google in `social/PIANO-SOCIAL.md`. Calendario settimanale dal 9 novembre 2026.
+- **Content-Security-Policy rigorosa**, generata a ogni build con le impronte dei 7 script interni e senza `unsafe-inline` per gli script. Provata su tutte le 69 pagine: 0 violazioni, tutti gli strumenti funzionano.
+- **Prestazioni** misurate su un telefono simulato con CPU rallentata 4 volte: LCP 0,56-0,70 secondi e CLS 0 su home, guide, competenze, comuni e contatti (la soglia "buono" di Google è 2,5 secondi).
+
+## Cosa non ho potuto fare, e perché
+
+- **Google Business Profile, Bing Places, Apple Business Connect, Dequo, Lawzana, Italiaonline, OpenStreetMap**: servono un account intestato allo Studio e, per Google, Bing e Apple, una verifica del titolare (cartolina, telefono o video). Non posso creare account o fare verifiche a nome dell'avvocata. Tutto il testo da copiare è in `ELENCHI.md`.
+- **Email sul dominio**: serve un servizio di posta (es. Google Workspace o Zoho) e la modifica del DNS, che è un'azione sul sito pubblicato.
+- **Lettura diretta delle schede Virgilio, Pagine Bianche e Lawzana**: quei siti bloccano la lettura automatica.
