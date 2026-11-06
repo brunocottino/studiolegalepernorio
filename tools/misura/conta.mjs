@@ -8,7 +8,7 @@ import { createHash, randomUUID } from "node:crypto";
 const HASH_CHIAVE = "__HASH_CHIAVE__";
 const EVENTI = new Set(["ingresso", "chiama", "whatsapp", "email", "modulo", "bot"]);
 const negozio = () => getStore({ name: "misura", consistency: "strong" });
-const pulisci = (s, n) => String(s || "").replace(/[^\p{L}\p{N} ./_-]/gu, "").slice(0, n);
+const pulisci = (s, n) => String(s || "").replace(/[^\p{L}\p{N} ./_()-]/gu, "").slice(0, n);
 const giorno = (d) => d.toISOString().slice(0, 10);
 
 async function registra(req) {
@@ -19,7 +19,7 @@ async function registra(req) {
   const ora = new Date();
   const ev = { e: d.e, p: pulisci(d.p, 120), f: pulisci(d.f, 40), t: ora.toISOString() };
   await negozio().setJSON(`ev/${giorno(ora)}/${ora.getTime()}-${randomUUID().slice(0, 8)}`, ev);
-  return new Response("", { status: 204 });
+  return new Response(null, { status: 204 });
 }
 
 async function statistiche(url) {
