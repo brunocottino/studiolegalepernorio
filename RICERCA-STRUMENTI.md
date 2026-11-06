@@ -108,3 +108,17 @@ Limite deontologico sempre valido: i testi restano informativi (art. 17 e 35 del
 - **Google Business Profile, Bing Places, Apple Business Connect, Dequo, Lawzana, Italiaonline, OpenStreetMap**: servono un account intestato allo Studio e, per Google, Bing e Apple, una verifica del titolare (cartolina, telefono o video). Non posso creare account o fare verifiche a nome dell'avvocata. Tutto il testo da copiare è in `ELENCHI.md`.
 - **Email sul dominio**: serve un servizio di posta (es. Google Workspace o Zoho) e la modifica del DNS, che è un'azione sul sito pubblicato.
 - **Lettura diretta delle schede Virgilio, Pagine Bianche e Lawzana**: quei siti bloccano la lettura automatica.
+
+---
+
+# Pubblicazione (6 novembre 2026)
+
+Rifiniture finali: title entro 65 caratteri su tutte le pagine (la firma si accorcia, il tema resta), descrizioni riscritte per home, diritto di famiglia, guide, cookie e privacy, e un paragrafo nell'informativa privacy su calcolatori, server MCP e WebMCP. Audit: 0 errori, 0 avvisi.
+
+Pubblicato in produzione su studiolegalepernorio.com (deploy 6aeddf8453f260ed4f941a16), con il sito e la funzione `/mcp`. Controlli sul sito vero:
+- tutte le pagine, le versioni `.md`, `cerca.json`, `agenti.js`, la scheda MCP e le immagini di anteprima rispondono 200;
+- CSP e HSTS sono attivi, i file `.md` sono `noindex`;
+- il server MCP risponde a initialize, cerca_nel_sito e leggi_pagina;
+- nessun errore JavaScript o CSP in un browser reale su 10 pagine chiave;
+- Netlify rileva entrambi i moduli (contatti e colloquio online);
+- IndexNow ha ricevuto i 67 URL.

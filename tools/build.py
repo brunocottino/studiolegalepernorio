@@ -789,7 +789,11 @@ def fix_privacy(s):
            "dal fornitore del modulo (Netlify, Inc.) per il tempo necessario a gestire la richiesta e poi trasferiti nel fascicolo dello Studio. "
            "Le videochiamate si svolgono, a scelta del cliente, tramite Jitsi Meet (8x8, Inc.) con un link personale non pubblicato, "
            "WhatsApp o telefono. I colloqui non vengono registrati. La prova di videocamera e microfono presente sul sito funziona solo nel browser "
-           "e non trasmette immagini né audio.</p>\n")
+           "e non trasmette immagini né audio.</p>\n"
+           "<p><b>Calcolatori e strumenti per assistenti IA.</b> I calcolatori del sito funzionano nel browser e non inviano allo Studio i dati inseriti. "
+           "Il servizio per assistenti IA all'indirizzo /mcp e gli strumenti WebMCP restituiscono solo informazioni pubbliche e calcoli: "
+           "non chiedono e non conservano dati personali, salvo i normali registri tecnici del fornitore di hosting (Netlify, Inc.). "
+           "La funzione che prepara una richiesta di contatto si limita a precompilare il modulo nel browser: l'invio resta sempre una scelta della persona.</p>\n")
     return s.replace("<p><b>Diritti.</b>", add + "<p><b>Diritti.</b>", 1)
 
 
@@ -861,7 +865,17 @@ def dati_studio():
     }
 
 
+TITOLI_NUOVI = {
+    "guida-eredita-con-debiti": "Eredità con debiti: rinuncia o beneficio d'inventario · Vigevano",
+    "guida-usucapione-quando-si-diventa-proprietari": "Usucapione: quando si diventa proprietari · Studio Pernorio",
+}
+
 DESC_NUOVE = {
+    "index": "Avv. Daniela Pernorio, avvocato civilista a Vigevano (PV): separazioni e divorzi, figli, eredità, sfratti, debiti con banche. Tribunale di Pavia.",
+    "diritto-di-famiglia": "Separazione, divorzio, affidamento e mantenimento dei figli, unioni civili e convivenze: l'Avv. Daniela Pernorio a Vigevano, Tribunale di Pavia.",
+    "guide": "Guide pratiche dell'Avv. Daniela Pernorio su famiglia, eredità, casa, debiti, lavoro e multe: risposte chiare, fonti di legge e casi frequenti.",
+    "cookie": "Informativa cookie dello Studio Legale Pernorio di Vigevano: il sito non installa cookie, non usa profilazione né strumenti di statistica.",
+    "privacy": "Informativa privacy dello Studio Legale Pernorio, Vigevano: quali dati raccoglie il sito con i moduli di contatto, perché e per quanto tempo.",
     "attivita": "Le 18 materie dell'Avv. Daniela Pernorio, avvocato civilista a Vigevano: famiglia e figli, eredità, casa e affitti, debiti, contratti, incidenti, lavoro.",
     "domiciliazioni": "Domiciliazioni e sostituzioni d'udienza per colleghi avvocati presso i Tribunali di Pavia, Milano e Novara e il Giudice di Pace di Vigevano.",
 }
@@ -897,7 +911,22 @@ def calcola_correlate(pagine):
         CORRELATE[a] = [(b, re.sub(r"<[^>]+>", "", titoli[b]).strip()) for _, b in sim]
 
 
+def titolo_corto(t, n=65):
+    """Title entro n caratteri (Google taglia oltre ~600 px): si accorcia la firma, mai il tema."""
+    base = t.split(" · ")[0]
+    if len(t) <= n:
+        return t
+    for suff in (" · Studio Pernorio, Vigevano", " · Studio Pernorio", " · Vigevano", ""):
+        if len(base + suff) <= n:
+            return base + suff
+    return base
+
+
 def fix_agenti(s, slug):
+    m = re.search(r"<title>(.*?)</title>", s, re.S)
+    if m:
+        nuovo = esc(TITOLI_NUOVI.get(slug) or titolo_corto(html.unescape(m.group(1).strip())))
+        s = s.replace(m.group(0), f"<title>{nuovo}</title>", 1)
     if slug in CORRELATE and "</article>" in s:
         li = "".join(f"<li><a href='/{b}'>{esc(t)}</a></li>" for b, t in CORRELATE[slug])
         i = s.rfind("</article>") + len("</article>")
