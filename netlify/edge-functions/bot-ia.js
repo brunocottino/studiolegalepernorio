@@ -28,6 +28,7 @@ export default async (req, context) => {
   const hit = BOT.find(([k]) => ua.toLowerCase().includes(k.toLowerCase()));
   if (!hit) return;
   const p = new URL(req.url).pathname;
+  if (p.endsWith(".html")) return; // rimanda alla pagina senza .html, che viene contata lì
   context.waitUntil(
     fetch(new URL("/api/conta", req.url), {
       method: "POST",
