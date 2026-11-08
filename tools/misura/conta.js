@@ -4,6 +4,7 @@
    nessun cookie, nessun dato personale: solo totali giornalieri. */
 (function () {
   if (navigator.webdriver || !navigator.sendBeacon) return;
+  try { if (localStorage.getItem("slp_escludi") === "1") return; } catch (x) {} // dispositivo dello Studio
   var FONTI = [
     [/chatgpt\.com|chat\.openai\.com|openai/, "ChatGPT"],
     [/perplexity/, "Perplexity"],
