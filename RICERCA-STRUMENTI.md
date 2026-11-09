@@ -122,3 +122,28 @@ Pubblicato in produzione su studiolegalepernorio.com (deploy 6aeddf8453f260ed4f9
 - nessun errore JavaScript o CSP in un browser reale su 10 pagine chiave;
 - Netlify rileva entrambi i moduli (contatti e colloquio online);
 - IndexNow ha ricevuto i 67 URL.
+
+---
+
+# Quarto giro: farsi trovare da più strumenti (9 novembre 2026)
+
+Preparato e salvato su GitHub. **Non pubblicato**: serve il permesso.
+
+1. **Ricerca nel sito** (`/cerca`). Una casella di ricerca nella pagina Guide, nella pagina di errore 404 e nel piè di pagina. Capisce le parole di tutti i giorni: "affitto" trova le locazioni, "padrone di casa" i diritti dell'inquilino, "nonno anziano" l'amministrazione di sostegno. Funziona nel browser: ciò che si scrive non viene inviato né salvato. Provata con 15 ricerche su computer e telefono, senza errori.
+2. **Il sito si cerca dalla barra del browser** (OpenSearch) e dichiara la ricerca a Google e agli assistenti (SearchAction).
+3. **Glossario legale** (`/glossario-legale`): 40 termini spiegati in poche righe, ognuno con l'articolo di legge su Normattiva e il collegamento alla guida. Risponde alle ricerche del tipo "cosa significa precetto". Dati strutturati DefinedTermSet. **Da far rileggere all'avvocata prima della pubblicazione.**
+4. **Date vere per Google**. Prima, a ogni build, tutte le 67 pagine risultavano modificate "oggi": Google in questi casi smette di fidarsi delle date. Ora la data cambia solo se cambia il testo (`dati/date-pagine.json`), e le guide tengono la data di prima pubblicazione.
+5. **Feed delle guide** (`/feed.xml`): lettori di feed, Bing e aggregatori vedono subito le guide nuove.
+6. **Sitemap con immagini**: le foto dello Studio e le anteprime entrano in Google Immagini.
+7. **Anteprime grandi e testo completo** nei risultati (`max-image-preview:large`, `max-snippet:-1`): servono anche per Google Discover.
+8. **Markdown su richiesta**: un assistente che chiede `Accept: text/markdown` riceve la pagina in testo pulito, allo stesso indirizzo. Le persone non vedono differenze.
+9. **Catalogo per gli agenti** (`/.well-known/api-catalog`, RFC 9727) e intestazioni `Link` sulla home: indicano dove sono llms.txt, sitemap, feed e server MCP.
+10. **Indice di ricerca più ricco**: comprende le domande frequenti di ogni pagina e i termini del glossario. Lo usano anche il server MCP e gli strumenti WebMCP.
+
+Audit: 0 errori, 0 avvisi. Nuovi controlli in `tools/audit.py` su feed, sitemap, ricerca e date.
+
+Non provata in produzione: la funzione `markdown.js` gira solo su Netlify. La logica è stata provata a parte e in caso di errore lascia passare la pagina normale.
+
+## Cosa resta fuori dal codice
+
+Sono ancora le mosse con più effetto, e richiedono un account intestato allo Studio: scheda Google curata e recensioni, Bing Places, Apple Business Connect, Dequo, correzione di Lawzana e di Virgilio/Pagine Bianche. I testi sono in `ELENCHI.md`.

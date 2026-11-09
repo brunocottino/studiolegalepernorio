@@ -16,6 +16,9 @@ Sorgente del sito https://studiolegalepernorio.com (Netlify, progetto `studioleg
 - `tools/social.mjs`: caroselli Instagram e piano editoriale (`social/`)
 - `tools/ricerche.py`: sezioni, FAQ e title scritti sulle ricerche reali di Search Console; testi del riquadro "Il suo caso" nelle guide
 - `tools/misura/`: misura senza cookie (provenienza delle visite, clic su Chiama/WhatsApp, visite dalle IA). Script `conta.js`, funzione `/api/conta` e `/api/statistiche` (Netlify Blobs), pagina riservata `/statistiche#k=CHIAVE`. In `chiave.sha256` c'è solo l'impronta della chiave, non la chiave
+- `tools/trovabile.py`: ricerca nel sito (`/cerca`, OpenSearch, SearchAction), glossario legale, feed Atom delle guide, sitemap con immagini, date stabili
+- `dati/date-pagine.json`: registro delle date. La data di modifica di una pagina cambia solo quando cambia il suo testo; il file si aggiorna da solo con la build e va salvato su GitHub insieme alle modifiche
+- `netlify/edge-functions/markdown.js`: risponde in Markdown a chi chiede `Accept: text/markdown` (assistenti IA)
 - `netlify/edge-functions/bot-ia.js`: conta le letture dei bot delle IA (gira solo per i loro user-agent)
 - `dati/`: misure di visibilità nelle IA
 - `ELENCHI.md`: dati identici da usare su Google, Bing, Apple, OpenStreetMap e negli elenchi

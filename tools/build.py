@@ -22,6 +22,7 @@ import colloquio as CO  # noqa: E402
 import agenti as AG  # noqa: E402
 import fonti as FO  # noqa: E402
 import ricerche as RI  # noqa: E402
+import trovabile as TR  # noqa: E402
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SRC = os.path.join(ROOT, "src")
@@ -547,6 +548,25 @@ def pagina_colloquio():
                   CO.LABEL, CO.H1, CO.LEAD, body + faq_html(faq), aside, extra_ld=[svc, faq_ld(faq)], script=CO.JS)
 
 
+def pagina_glossario(esistenti):
+    for g in TR.GLOSSARIO:
+        assert g[4][0] in esistenti, f"Glossario: pagina inesistente {g[4][0]}"
+    assert len({g[0] for g in TR.GLOSSARIO}) == len(TR.GLOSSARIO), "Glossario: id doppi"
+    crumbs = [("Home", BASE + "/"), ("Guide", clean_url("guide")), ("Glossario", None)]
+    return pagina(TR.GLOSSARIO_SLUG, TR.GLOSSARIO_TITLE, TR.GLOSSARIO_DESC, crumbs, "Glossario", "Glossario legale",
+                  "Le parole che si incontrano in un atto, in una lettera o in udienza, spiegate in poche righe e con la fonte di legge.",
+                  TR.glossario_body(C.AGGIORNATO), aside_std(extra=strumenti_card()), extra_ld=[TR.glossario_ld()])
+
+
+def pagina_cerca():
+    crumbs = [("Home", BASE + "/"), ("Cerca", None)]
+    s = pagina(TR.CERCA_SLUG, "Cerca nel sito · Studio Legale Pernorio", "Cerca tra le guide, le competenze, il glossario e gli strumenti dello Studio Legale Pernorio di Vigevano.",
+               crumbs, "Ricerca", "Cerca nel sito", "Guide, competenze, glossario e strumenti: scriva la parola che le interessa.",
+               TR.cerca_body(), aside_std(), script='<script src="/cerca.js" defer></script>')
+    s = s.replace(f"<div class=actions>{BTN_CALL}{BTN_WA}</div></div></section>", "</div></section>", 1)
+    return s.replace(CTA_SECTION, "", 1)
+
+
 def card_online():
     return ("<a class='card panel rv gcard' href='/colloquio-online'><span class=\"label\">Novità · Da casa</span>"
             "<b>Colloquio online con l'avvocato</b><span class=\"note-s\">Videochiamata, documenti inviati prima, riepilogo scritto →</span></a>")
@@ -557,7 +577,10 @@ def fix_indice_guide(s):
         f"<a class='card glink' href='/{g['slug']}'><span class=\"label\">{esc(g['cat'])}</span><b>{esc(g['titolo'])}</b><span>{esc(g['sommario'])}</span></a>"
         for g in G.GUIDE
     )
-    s = s.replace('<div class="glist rv">', '<div class="glist rv">' + cards, 1)
+    gloss = ("<a class='card glink' href='/glossario-legale'><span class=\"label\">Glossario</span><b>Le parole del diritto, in breve</b>"
+             f"<span>{len(TR.GLOSSARIO)} termini spiegati in poche righe, dall'addebito all'usucapione, con la fonte di legge.</span></a>")
+    s = s.replace('<div class="glist rv">', '<div class="glist rv">' + cards + gloss, 1)
+    s = s.replace("</p></div></section>", "</p>" + TR.modulo_cerca() + "</div></section>", 1)
     s = s.replace("Informazioni generali, aggiornate a ottobre 2026.", f"Informazioni generali, aggiornate a {C.AGGIORNATO}.")
     return s
 
@@ -637,6 +660,7 @@ def fix_ld(s):
             elif t == "WebSite":
                 it["@id"] = BASE + "/#sito"
                 it["publisher"] = {"@id": BASE + "/#studio"}
+                it["potentialAction"] = TR.search_action()
             elif t == "Article":
                 it["author"] = {"@type": "Person", "@id": BASE + "/#avvocato", "name": "Avv. Daniela Pernorio", "url": clean_url("studio")}
                 it["publisher"] = {"@id": BASE + "/#studio"}
@@ -665,6 +689,9 @@ def fix_head(s, slug, noindex=False):
         extra += '<meta name="twitter:card" content="summary_large_image">'
     if noindex and 'name="robots"' not in s:
         extra += '<meta name="robots" content="noindex, follow">'
+    elif not noindex and 'name="robots"' not in s:
+        extra += TR.ROBOTS_META
+    extra += TR.HEAD_LINKS
     s = s.replace("<link rel=\"icon\"", extra + "\n<link rel=\"icon\"", 1)
     del title
     return s
@@ -683,7 +710,7 @@ def fix_nav(s):
 
 
 def fix_footer(s):
-    extra = "<li><a href='/strumenti'>Strumenti gratuiti</a></li><li><a href='/costi-avvocato'>Costi e preventivo</a></li><li><a href='/colloquio-online'>Colloquio online</a></li>"
+    extra = "<li><a href='/strumenti'>Strumenti gratuiti</a></li><li><a href='/costi-avvocato'>Costi e preventivo</a></li><li><a href='/colloquio-online'>Colloquio online</a></li><li><a href='/glossario-legale'>Glossario legale</a></li><li><a href='/cerca'>Cerca nel sito</a></li>"
     s = s.replace("<li><a href='/domande'>Domande frequenti</a></li>", "<li><a href='/domande'>Domande frequenti</a></li>" + extra, 1)
     zone = " · ".join(f"<a href='/{c['slug']}'>{esc(c['nome'])}</a>" for c in C.COMUNI)
     blocco = f'<div class="fzones"><span>Dove operiamo:</span> <a href=\'/\'>Vigevano</a> · {zone} · <a href=\'/{C.LOMELLINA["slug"]}\'>Lomellina</a></div>\n'
@@ -858,7 +885,7 @@ CSS_EXTRA += """
 def build_css():
     fonts = open(os.path.join(STATIC, "fonts", "fonts.css"), encoding="utf-8").read()
     css = open(os.path.join(SRC, "style.css"), encoding="utf-8").read()
-    return fonts + "\n" + css + CSS_EXTRA + CO.CSS
+    return fonts + "\n" + css + CSS_EXTRA + CO.CSS + TR.CSS
 
 
 # ---------------------------------------------------------------------------
@@ -1111,17 +1138,19 @@ def csp(tutte):
     ])
 
 
-def scrivi_agenti(tutte, indicizzabili):
+def scrivi_agenti(tutte, indicizzabili, date):
     """File per agenti: Markdown di ogni pagina, indice di ricerca, agenti.js, robots.txt."""
     indice = []
     for slug in indicizzabili:
         s = tutte[slug]
         with open(os.path.join(DIST, AG.md_di(slug).lstrip("/")), "w", encoding="utf-8") as fh:
-            fh.write(AG.pagina_md(slug, s, OGGI))
+            fh.write(AG.pagina_md(slug, s, date[slug][1]))
         t = html.unescape(re.search(r"<title>(.*?)</title>", s, re.S).group(1).strip())
         m = re.search(r'<meta name="description" content="([^"]*)">', s)
         h2 = " ".join(html.unescape(re.sub(r"<[^>]+>", "", x)) for x in re.findall(r"<h2[^>]*>(.*?)</h2>", s, re.S))
-        indice.append({"t": t, "d": html.unescape(m.group(1)) if m else "", "k": h2[:600], "u": clean_url(slug), "m": BASE + AG.md_di(slug)})
+        faqs = " ".join(html.unescape(re.sub(r"<[^>]+>", "", x)) for x in re.findall(r"<summary>(.*?)</summary>", s, re.S))
+        indice.append({"t": t, "d": html.unescape(m.group(1)) if m else "", "k": (h2 + " " + faqs)[:900], "u": clean_url(slug), "m": BASE + AG.md_di(slug), "c": TR.categoria(slug)})
+    indice += TR.glossario_indice()
     with open(os.path.join(DIST, "cerca.json"), "w", encoding="utf-8") as fh:
         json.dump(indice, fh, ensure_ascii=False, separators=(",", ":"))
     with open(os.path.join(DIST, "agenti.js"), "w", encoding="utf-8") as fh:
@@ -1140,6 +1169,9 @@ def scrivi_agenti(tutte, indicizzabili):
 
 
 # ---------------------------------------------------------------------------
+
+NON_INDICIZZATE = ("404", "grazie", TR.CERCA_SLUG)
+
 
 def main():
     if os.path.isdir(DIST):
@@ -1166,6 +1198,10 @@ def main():
     nuove.update(pagine_strumenti())
     nuove.update(pagine_guide())
     nuove[CO.SLUG] = pagina_colloquio()
+    nuove[TR.GLOSSARIO_SLUG] = pagina_glossario(set(pagine) | set(nuove))
+    nuove[TR.CERCA_SLUG] = pagina_cerca()
+    registro = TR.carica_registro()
+    date = {}
 
     calcola_correlate({**pagine, **nuove})
     tutte = {}
@@ -1191,29 +1227,53 @@ def main():
         s = fix_orari_social(s)
         s = fix_urls(s)
         s = fix_ld(s)
-        s = fix_head(s, slug, noindex=slug in ("404", "grazie"))
+        if slug == "404":
+            s = s.replace("<div class=actions>", TR.modulo_cerca() + '<div class=actions style="margin-top:18px">', 1)
+        s = fix_head(s, slug, noindex=slug in NON_INDICIZZATE)
         s = fix_nav(s)
         s = fix_footer(s)
-        if slug not in ("404", "grazie"):
+        if slug not in NON_INDICIZZATE:
             s = fix_agenti(s, slug)
+            date[slug] = TR.date_pagina(registro, slug, s, OGGI)
+            s = TR.applica_date(s, OGGI, *date[slug])
         tutte[slug] = s
         with open(os.path.join(DIST, slug + ".html"), "w", encoding="utf-8") as fh:
             fh.write(s)
 
-    # Sitemap
-    esclusi = {"404", "grazie"}
+    # Sitemap: la data cambia solo quando cambia il testo della pagina (dati/date-pagine.json)
+    TR.salva_registro(registro)
+    esclusi = set(NON_INDICIZZATE)
     prio = {"index": "1.0", "attivita": "0.9", "contatti": "0.9", "studio": "0.8"}
     urls = []
     for slug in sorted(tutte, key=lambda x: (x != "index", x)):
         if slug in esclusi:
             continue
         p = prio.get(slug, "0.8" if slug.startswith(("attivita-", "avvocato-")) else "0.7")
-        urls.append(f"<url><loc>{clean_url(slug)}</loc><lastmod>{OGGI}</lastmod><priority>{p}</priority></url>")
+        ha_og = os.path.exists(os.path.join(STATIC, "og", slug + ".jpg"))
+        urls.append((clean_url(slug), date[slug][1], p, TR.immagini_pagina(slug, tutte[slug], ha_og)))
     with open(os.path.join(DIST, "sitemap.xml"), "w", encoding="utf-8") as fh:
-        fh.write('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' + "\n".join(urls) + "\n</urlset>\n")
+        fh.write(TR.sitemap(urls))
+
+    # Feed Atom delle guide, ricerca nel sito, OpenSearch, catalogo delle API
+    voci = []
+    for slug in sorted(tutte):
+        if not slug.startswith("guida-"):
+            continue
+        h = tutte[slug]
+        cat = re.search(r'<span class="label">Guida · ([^·<]+)', h)
+        voci.append({"url": clean_url(slug), "pub": date[slug][0], "mod": date[slug][1],
+                     "titolo": html.unescape(re.sub(r"<[^>]+>", "", re.search(r"<h1[^>]*>(.*?)</h1>", h, re.S).group(1))).strip(),
+                     "sommario": html.unescape(re.search(r'<meta name="description" content="([^"]*)">', h).group(1)),
+                     "cat": html.unescape(cat.group(1)).strip() if cat else "Guide"})
+    for fn, testo in (("feed.xml", TR.feed_atom(voci)), ("opensearch.xml", TR.opensearch()), ("cerca.js", TR.CERCA_JS)):
+        with open(os.path.join(DIST, fn), "w", encoding="utf-8") as fh:
+            fh.write(testo)
+    os.makedirs(os.path.join(DIST, ".well-known"), exist_ok=True)
+    with open(os.path.join(DIST, ".well-known", "api-catalog"), "w", encoding="utf-8") as fh:
+        json.dump(TR.api_catalog(), fh, ensure_ascii=False, indent=1)
 
     # robots.txt, Markdown, indice di ricerca e WebMCP
-    scrivi_agenti(tutte, [x for x in tutte if x not in esclusi])
+    scrivi_agenti(tutte, [x for x in tutte if x not in esclusi], date)
 
     # llms.txt e llms-full.txt
     for fn in ("llms.txt", "llms-full.txt"):
@@ -1226,10 +1286,14 @@ def main():
             t += f"- [Quanto costa un avvocato]({clean_url('costi-avvocato')}): preventivo scritto, parametri, spese vive\n"
             t += f"\n## Colloquio online\n\n- [Colloquio online con l'avvocato]({clean_url(CO.SLUG)}): videochiamata dal browser o WhatsApp, invio documenti, riepilogo e preventivo scritto\n"
             t += "\n## Nuove guide\n\n" + "".join(f"- [{g['titolo']}]({clean_url(g['slug'])}): {g['sommario']}\n" for g in G.GUIDE)
+            t += f"- [Glossario legale]({clean_url(TR.GLOSSARIO_SLUG)}): {len(TR.GLOSSARIO)} termini di diritto civile spiegati in breve, con la fonte di legge\n"
             t += "\n## Strumenti\n\n"
             t += "".join(f"- [{x['titolo_breve']}]({clean_url(x['slug'])}): {x['intro']}\n" for x in C.STRUMENTI)
             t += ("\n## Per agenti e assistenti IA\n\n"
                   f"- Ogni pagina ha una versione Markdown: aggiungere .md all'indirizzo (es. {BASE}/attivita-separazione-divorzio.md, home: {BASE}/index.md)\n"
+                  f"- Con l'intestazione HTTP Accept: text/markdown ogni pagina risponde direttamente in Markdown\n"
+                  f"- [Feed Atom delle guide]({BASE}/feed.xml), con data di pubblicazione e di ultimo aggiornamento\n"
+                  f"- Ricerca: {BASE}/cerca?q=parola (pagina per le persone); descrizione OpenSearch: {BASE}/opensearch.xml; catalogo: {BASE}/.well-known/api-catalog\n"
                   f"- [Indice di ricerca JSON]({BASE}/cerca.json): titolo, descrizione, URL e versione Markdown di ogni pagina\n"
                   f"- Server MCP pubblico, senza registrazione: {BASE}/mcp (Streamable HTTP; scheda: {BASE}/.well-known/mcp/server-card.json)\n"
                   "- Strumenti WebMCP nel browser (document.modelContext): informazioni-studio, cerca-nel-sito, calcola-quote-eredita, calcola-imposta-successione, scadenze-multa, prepara-richiesta-allo-studio (non invia nulla senza il click della persona)\n")
@@ -1257,6 +1321,7 @@ def main():
     with open(os.path.join(DIST, "_headers"), "a", encoding="utf-8") as fh:
         fh.write("\n# Generato da tools/build.py\n/*\n  Content-Security-Policy: " + csp(tutte) + "\n")
         fh.write("\n/statistiche*\n  X-Robots-Tag: noindex, nofollow\n  Cache-Control: no-store\n")
+        fh.write(TR.HEADERS)
     shutil.copy(os.path.join(ROOT, "netlify", "netlify.toml"), os.path.join(DIST, "netlify.toml"))
 
     print(f"Build completato: {len(tutte)} pagine ({len(nuove)} nuove), {len(urls)} URL in sitemap -> {DIST}")

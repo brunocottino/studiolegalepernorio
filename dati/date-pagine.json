@@ -1,0 +1,342 @@
+{
+"attivita": {
+"imp": "001cf32206fc03cb",
+"mod": "2026-11-08",
+"pub": "2026-10-28"
+},
+"attivita-affidamento-minori": {
+"imp": "384d4785bceb18c9",
+"mod": "2026-11-08",
+"pub": "2026-10-28"
+},
+"attivita-amministrazione-di-sostegno": {
+"imp": "6e58a69360072a8c",
+"mod": "2026-11-08",
+"pub": "2026-10-28"
+},
+"attivita-codice-della-strada": {
+"imp": "beb4feacc8d1b273",
+"mod": "2026-11-08",
+"pub": "2026-10-28"
+},
+"attivita-condominio": {
+"imp": "42c0e9f0099a638d",
+"mod": "2026-11-08",
+"pub": "2026-10-28"
+},
+"attivita-contratti": {
+"imp": "b9d8aeda7275ff72",
+"mod": "2026-11-08",
+"pub": "2026-10-28"
+},
+"attivita-crisi-impresa": {
+"imp": "6ae61fe01142552e",
+"mod": "2026-11-08",
+"pub": "2026-10-28"
+},
+"attivita-lavoro": {
+"imp": "dab70c38b8f01ff4",
+"mod": "2026-11-08",
+"pub": "2026-10-28"
+},
+"attivita-locazioni-comodato": {
+"imp": "c8e18361317a9d92",
+"mod": "2026-11-08",
+"pub": "2026-10-28"
+},
+"attivita-mediazione-civile": {
+"imp": "44761fcb103406c0",
+"mod": "2026-11-08",
+"pub": "2026-10-28"
+},
+"attivita-negoziazione-assistita": {
+"imp": "07bbe8ed2fe0ea98",
+"mod": "2026-11-08",
+"pub": "2026-10-28"
+},
+"attivita-recupero-crediti": {
+"imp": "86353fb305e79a2d",
+"mod": "2026-11-08",
+"pub": "2026-10-28"
+},
+"attivita-saldo-e-stralcio": {
+"imp": "c3c0474c1759de31",
+"mod": "2026-11-08",
+"pub": "2026-10-28"
+},
+"attivita-separazione-divorzio": {
+"imp": "51c1948dc6e73618",
+"mod": "2026-11-08",
+"pub": "2026-10-28"
+},
+"attivita-sfratti": {
+"imp": "db131af3dfdeff29",
+"mod": "2026-11-08",
+"pub": "2026-10-28"
+},
+"attivita-sinistri-responsabilita": {
+"imp": "39fe1f77ca3917df",
+"mod": "2026-11-08",
+"pub": "2026-10-28"
+},
+"attivita-successioni": {
+"imp": "86df63a7d4154bf0",
+"mod": "2026-11-08",
+"pub": "2026-10-28"
+},
+"attivita-unioni-civili": {
+"imp": "4fefbcfca529de79",
+"mod": "2026-11-08",
+"pub": "2026-10-28"
+},
+"attivita-usucapione-diritti-reali": {
+"imp": "1cf46945a1529fbd",
+"mod": "2026-11-08",
+"pub": "2026-10-28"
+},
+"avvocato-abbiategrasso": {
+"imp": "d210ed429c7f6fab",
+"mod": "2026-11-08",
+"pub": "2026-11-06"
+},
+"avvocato-cassolnovo": {
+"imp": "d8608cec9e7fe59e",
+"mod": "2026-11-08",
+"pub": "2026-11-06"
+},
+"avvocato-cilavegna": {
+"imp": "b21771b35a4aad18",
+"mod": "2026-11-08",
+"pub": "2026-11-06"
+},
+"avvocato-gambolo": {
+"imp": "b4e717fa062501e6",
+"mod": "2026-11-08",
+"pub": "2026-11-06"
+},
+"avvocato-garlasco": {
+"imp": "c77f32a15c24c76a",
+"mod": "2026-11-08",
+"pub": "2026-11-06"
+},
+"avvocato-lomellina": {
+"imp": "f10d2529dc3ee45d",
+"mod": "2026-11-08",
+"pub": "2026-11-06"
+},
+"avvocato-mortara": {
+"imp": "f3a60037598cc631",
+"mod": "2026-11-08",
+"pub": "2026-11-06"
+},
+"colloquio-online": {
+"imp": "cc1f127ef821b286",
+"mod": "2026-11-08",
+"pub": "2026-11-06"
+},
+"contatti": {
+"imp": "2cd02cdfdc24878d",
+"mod": "2026-11-08",
+"pub": "2026-10-28"
+},
+"cookie": {
+"imp": "f5a379e2cdebcbe5",
+"mod": "2026-11-08",
+"pub": "2026-10-28"
+},
+"costi-avvocato": {
+"imp": "705792198004d86b",
+"mod": "2026-11-08",
+"pub": "2026-11-06"
+},
+"diritto-di-famiglia": {
+"imp": "773292c2fe07d029",
+"mod": "2026-11-08",
+"pub": "2026-10-28"
+},
+"domande": {
+"imp": "48d54b4dd618891d",
+"mod": "2026-11-08",
+"pub": "2026-10-28"
+},
+"domiciliazioni": {
+"imp": "255ce832315e628d",
+"mod": "2026-11-08",
+"pub": "2026-10-28"
+},
+"glossario-legale": {
+"imp": "cfdf500ae9d8eedf",
+"mod": "2026-11-09",
+"pub": "2026-11-09"
+},
+"guida-affidamento-figli-condiviso-esclusivo": {
+"imp": "7c42d4cc10a0d14c",
+"mod": "2026-11-08",
+"pub": "2026-10-28"
+},
+"guida-amministrazione-di-sostegno": {
+"imp": "6fedae490c61300a",
+"mod": "2026-11-08",
+"pub": "2026-10-28"
+},
+"guida-assegno-mantenimento-figli": {
+"imp": "98613247f14cf5a9",
+"mod": "2026-11-08",
+"pub": "2026-11-06"
+},
+"guida-casa-familiare-separazione": {
+"imp": "0c8ea8b2e91ec961",
+"mod": "2026-11-08",
+"pub": "2026-11-06"
+},
+"guida-costo-separazione-consensuale": {
+"imp": "24258dec29194bc1",
+"mod": "2026-11-08",
+"pub": "2026-11-06"
+},
+"guida-deposito-cauzionale-affitto": {
+"imp": "9d9ab309b84eb35c",
+"mod": "2026-11-08",
+"pub": "2026-11-06"
+},
+"guida-diritti-inquilino": {
+"imp": "5113b0cc917441b0",
+"mod": "2026-11-08",
+"pub": "2026-11-06"
+},
+"guida-divorzio-tempi": {
+"imp": "326627b25bbaa31d",
+"mod": "2026-11-08",
+"pub": "2026-11-06"
+},
+"guida-domiciliazioni-tribunale-pavia": {
+"imp": "e4ff65fa1fcc69fa",
+"mod": "2026-11-08",
+"pub": "2026-11-06"
+},
+"guida-eredita-con-debiti": {
+"imp": "a2724d019752d357",
+"mod": "2026-11-08",
+"pub": "2026-11-06"
+},
+"guida-fine-convivenza-diritti": {
+"imp": "1883c57f75225b92",
+"mod": "2026-11-08",
+"pub": "2026-11-06"
+},
+"guida-impugnare-delibera-condominiale": {
+"imp": "9b8895137cabe632",
+"mod": "2026-11-08",
+"pub": "2026-11-06"
+},
+"guida-incidente-stradale-cosa-fare": {
+"imp": "a6a55837c68435a5",
+"mod": "2026-11-08",
+"pub": "2026-11-06"
+},
+"guida-licenziamento-cosa-fare": {
+"imp": "47103a293d05cfa2",
+"mod": "2026-11-08",
+"pub": "2026-11-06"
+},
+"guida-multa-autovelox-2026": {
+"imp": "257ef9bda33a341c",
+"mod": "2026-11-08",
+"pub": "2026-10-28"
+},
+"guida-negoziazione-assistita-o-mediazione": {
+"imp": "4069a5769ee60a74",
+"mod": "2026-11-08",
+"pub": "2026-10-28"
+},
+"guida-pignoramento-stipendio-pensione": {
+"imp": "fdb98dd5243d20c5",
+"mod": "2026-11-08",
+"pub": "2026-11-06"
+},
+"guida-prestito-tra-privati": {
+"imp": "37916d4c341824fb",
+"mod": "2026-11-08",
+"pub": "2026-11-06"
+},
+"guida-saldo-e-stralcio-banche-finanziarie": {
+"imp": "3c7f51e120d29465",
+"mod": "2026-11-08",
+"pub": "2026-10-28"
+},
+"guida-scioglimento-unione-civile": {
+"imp": "cf5e300759f6bbb7",
+"mod": "2026-11-08",
+"pub": "2026-10-28"
+},
+"guida-separazione-divorzio-unica-domanda": {
+"imp": "f5c160dca511c478",
+"mod": "2026-11-08",
+"pub": "2026-10-28"
+},
+"guida-sfratto-per-morosita": {
+"imp": "04e63242ed956faf",
+"mod": "2026-11-08",
+"pub": "2026-10-28"
+},
+"guida-successioni-autoliquidazione-imposta": {
+"imp": "e840ca7e24b361a5",
+"mod": "2026-11-08",
+"pub": "2026-10-28"
+},
+"guida-testamento-olografo": {
+"imp": "539da7d177928eff",
+"mod": "2026-11-08",
+"pub": "2026-11-06"
+},
+"guida-usucapione-quando-si-diventa-proprietari": {
+"imp": "e0caacc132a353c7",
+"mod": "2026-11-08",
+"pub": "2026-10-28"
+},
+"guide": {
+"imp": "b1f90c940409f5e3",
+"mod": "2026-11-09",
+"pub": "2026-10-28"
+},
+"index": {
+"imp": "ee1cd6a712652898",
+"mod": "2026-11-08",
+"pub": "2026-10-28"
+},
+"privacy": {
+"imp": "1663c417d4f58402",
+"mod": "2026-11-08",
+"pub": "2026-10-28"
+},
+"strumenti": {
+"imp": "b663abcdea0ce769",
+"mod": "2026-11-08",
+"pub": "2026-11-06"
+},
+"strumento-calcolo-imposta-successione": {
+"imp": "fce125401225728b",
+"mod": "2026-11-08",
+"pub": "2026-11-06"
+},
+"strumento-calcolo-quote-eredita": {
+"imp": "40caee2865bdb435",
+"mod": "2026-11-08",
+"pub": "2026-11-06"
+},
+"strumento-checklist-separazione": {
+"imp": "baded0f358d2599d",
+"mod": "2026-11-08",
+"pub": "2026-11-06"
+},
+"strumento-scadenze-multa": {
+"imp": "bc9da57a660b610b",
+"mod": "2026-11-08",
+"pub": "2026-11-06"
+},
+"studio": {
+"imp": "c4b9517850351c5e",
+"mod": "2026-11-08",
+"pub": "2026-10-28"
+}
+}

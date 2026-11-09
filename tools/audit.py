@@ -83,6 +83,21 @@ def main():
     def p(sev, msg):
         problemi[sev].append(msg)
 
+    # Ricerca, feed, sitemap e scoperta (tools/trovabile.py)
+    import xml.dom.minidom as _xml
+    for fn in ("sitemap.xml", "feed.xml", "opensearch.xml"):
+        try:
+            _xml.parse(os.path.join(DIST, fn))
+        except Exception as e:  # noqa: BLE001
+            p("errore", f"`{fn}`: assente o XML non valido ({e})")
+    for fn in ("cerca.js", "cerca.json", os.path.join(".well-known", "api-catalog")):
+        if not os.path.exists(os.path.join(DIST, fn)):
+            p("errore", f"`{fn}` mancante")
+    sm = leggi(os.path.join(DIST, "sitemap.xml")) if os.path.exists(os.path.join(DIST, "sitemap.xml")) else ""
+    giorni = set(re.findall(r"<lastmod>(.*?)</lastmod>", sm))
+    if len(giorni) == 1 and sm.count("<url>") > 5:
+        p("avviso", "sitemap: tutte le pagine hanno la stessa data di modifica (Google la ignora): controllare dati/date-pagine.json")
+
     pagine = {fn[:-5]: leggi(os.path.join(DIST, fn)) for fn in sorted(os.listdir(DIST)) if fn.endswith(".html")}
     indicizzabili = {k for k, v in pagine.items() if 'name="robots" content="noindex' not in v}
     titoli, descr, testi = {}, {}, {}
@@ -116,6 +131,10 @@ def main():
             p("errore", f"`{slug}`: lang diverso da it")
         # Google AI: nessuna restrizione di snippet
         rob = (soup.find("meta", attrs={"name": "robots"}) or {}).get("content", "")
+        if "max-image-preview:large" not in rob:
+            p("avviso", f"`{slug}`: manca max-image-preview:large (anteprime grandi su Google e Discover)")
+        if not soup.find("link", rel="search"):
+            p("avviso", f"`{slug}`: manca il collegamento a opensearch.xml")
         if "nosnippet" in rob or "max-snippet:0" in rob:
             p("errore", f"`{slug}`: snippet bloccati, la pagina non può essere citata in AI Overviews")
         # Immagini
