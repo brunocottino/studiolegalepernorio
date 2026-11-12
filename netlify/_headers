@@ -27,5 +27,19 @@
   Access-Control-Allow-Origin: *
   Cache-Control: public, max-age=3600
 
+/cerca-testo.json
+  Access-Control-Allow-Origin: *
+  Cache-Control: public, max-age=3600
+  X-Robots-Tag: noindex
+
+/cerca.js
+  Cache-Control: public, max-age=3600
+
+/openapi.json
+  Access-Control-Allow-Origin: *
+
+/opensearch.xml
+  Content-Type: application/opensearchdescription+xml; charset=utf-8
+
 /agenti.js
   Cache-Control: public, max-age=3600

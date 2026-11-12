@@ -122,3 +122,36 @@ Pubblicato in produzione su studiolegalepernorio.com (deploy 6aeddf8453f260ed4f9
 - nessun errore JavaScript o CSP in un browser reale su 10 pagine chiave;
 - Netlify rileva entrambi i moduli (contatti e colloquio online);
 - IndexNow ha ricevuto i 67 URL.
+
+---
+
+# Ricerca sul testo completo, per persone e per IA (12 novembre 2026)
+
+Niente è stato pubblicato su Netlify: le modifiche sono su GitHub, nel ramo di lavoro.
+
+## Il problema
+
+- Sul sito non c'era una ricerca per le persone.
+- La ricerca usata dalle IA (server MCP e WebMCP) guardava solo titolo e descrizione delle pagine. "Alimenti", "padrone di casa" o "caparra" non trovavano nulla, perché le guide dicono "mantenimento", "locatore" e "deposito cauzionale".
+- `llms-full.txt` conteneva le 18 competenze ma nessuna delle 25 guide.
+
+## Cosa è stato fatto
+
+1. **Un solo motore di ricerca** (`tools/cerca.py`) sul testo completo: 67 pagine divise in 510 passaggi (ogni sezione e ogni domanda frequente è un risultato a sé). Usa BM25, le radici delle parole italiane e 34 gruppi di sinonimi tra linguaggio comune e termini giuridici. Ogni risultato porta al paragrafo esatto (ogni h2 ora ha un suo indirizzo, es. `/guida-assegno-mantenimento-figli#figli-maggiorenni`).
+2. **Pagina `/cerca`** per le persone: risultati mentre si scrive, parole evidenziate, ricerche frequenti. Se non trova nulla propone di chiamare o scrivere. Lente nell'intestazione, voce nel menu del telefono e nel piè di pagina, casella nelle pagine Guide, Domande e 404. La ricerca gira nel browser: le parole cercate non vengono inviate né registrate.
+3. **API pubblica `/api/cerca?q=...`** per gli assistenti IA: restituisce i passaggi con il testo e l'URL da citare, in JSON o in Markdown (`&formato=md`). Descritta in `/openapi.json`, così si può collegare a un GPT personalizzato.
+4. **Server MCP**: `cerca_nel_sito` ora cerca nel testo completo e restituisce già la risposta. Aggiunti `search` e `fetch`, i due strumenti che ChatGPT richiede ai connettori per la ricerca e la ricerca approfondita.
+5. **Markdown su richiesta**: un agente che chiede una pagina con `Accept: text/markdown` riceve direttamente il testo pulito (`netlify/edge-functions/markdown.js`, gira solo per quelle richieste).
+6. **Scoperta**: `SearchAction` nei dati strutturati del sito, `opensearch.xml`, sezione per agenti in `llms.txt` aggiornata.
+7. **`llms-full.txt`** ora contiene anche il testo completo delle 25 guide (da 23 a 138 KB).
+8. **Misura**: le statistiche contano quante volte le IA usano `/api/cerca` e `/mcp` e quale assistente è, mai il testo delle domande. Paragrafo aggiunto all'informativa privacy.
+
+## Controlli
+
+- `tools/prova_cerca.mjs`: 30 domande scritte come le scriverebbe un cliente; per 30 su 30 la pagina giusta è tra le prime tre. Le soglie sono state regolate su queste stesse domande, quindi il numero è ottimistico: su domande nuove la ricerca è buona ma non perfetta.
+- Audit: 0 errori, 0 avvisi; ogni risultato punta a un paragrafo che esiste.
+- Provato in Chromium, computer e telefono: ricerca, clic sul risultato, WebMCP simulato, nessun errore di CSP. API, MCP e risposta Markdown provati in locale con un server di prova; l'Edge Function va riprovata sul sito vero dopo la pubblicazione.
+
+## Argomenti cercati ma senza una pagina
+
+Provando domande nuove, questi temi non hanno contenuto: gratuito patrocinio, liti di vicinato (rumori, animali), danni da animali. Sono candidati per le prossime guide.

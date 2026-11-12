@@ -22,6 +22,7 @@ import colloquio as CO  # noqa: E402
 import agenti as AG  # noqa: E402
 import fonti as FO  # noqa: E402
 import ricerche as RI  # noqa: E402
+import cerca as CE  # noqa: E402
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SRC = os.path.join(ROOT, "src")
@@ -637,6 +638,9 @@ def fix_ld(s):
             elif t == "WebSite":
                 it["@id"] = BASE + "/#sito"
                 it["publisher"] = {"@id": BASE + "/#studio"}
+                it["potentialAction"] = {"@type": "SearchAction",
+                                         "target": {"@type": "EntryPoint", "urlTemplate": BASE + "/cerca?q={search_term_string}"},
+                                         "query-input": "required name=search_term_string"}
             elif t == "Article":
                 it["author"] = {"@type": "Person", "@id": BASE + "/#avvocato", "name": "Avv. Daniela Pernorio", "url": clean_url("studio")}
                 it["publisher"] = {"@id": BASE + "/#studio"}
@@ -682,8 +686,55 @@ def fix_nav(s):
     return s
 
 
+LENTE_NAV = f'<a class="icon-btn" href="/cerca" aria-label="Cerca nel sito" title="Cerca nel sito">{CE.ICO_LENTE}</a>'
+
+
+def fix_cerca_nav(s, slug):
+    """Lente di ricerca nell'intestazione, voce "Cerca" nel menu mobile, caselle di ricerca nelle pagine indice."""
+    if slug != "cerca":
+        s = s.replace('<button class="burger"', LENTE_NAV + '\n<button class="burger"', 1)
+    arr = re.search(r'<span class="arr">.*?</span>', s, re.S)
+    if arr:
+        s = re.sub(r"(<nav aria-label=\"Menu\">.*?)(</nav>)",
+                   lambda m: m.group(1) + f"<a href='/cerca'>Cerca{arr.group(0)}</a>" + m.group(2), s, count=1, flags=re.S)
+    if slug in ("guide", "domande", "404"):
+        # casella sotto il titolo della pagina
+        s = re.sub(r'(<section class="phero">.*?)(</div></section>)',
+                   lambda m: m.group(1) + CE.modulo(ident="cerca-q") + m.group(2), s, count=1, flags=re.S)
+    s = s.replace('<link rel="manifest"', '<link rel="search" type="application/opensearchdescription+xml" title="Studio Legale Pernorio" href="/opensearch.xml"><link rel="manifest"', 1)
+    return s
+
+
+def ancore_h2(s):
+    """Dà un id a ogni h2 del contenuto: i risultati della ricerca (e le IA) possono puntare al paragrafo esatto."""
+    i, j = s.find("<main"), s.find("</main>")
+    if i < 0 or j < 0:
+        return s
+    visti = set(re.findall(r'\bid=["\']([^"\']+)', s))
+
+    def repl(m):
+        if " id=" in m.group(1):
+            return m.group(0)
+        a = CE.ancora(html.unescape(re.sub(r"<[^>]+>", "", m.group(2))))
+        if not a or a in visti:
+            return m.group(0)
+        visti.add(a)
+        return f'<h2{m.group(1)} id="{a}">{m.group(2)}</h2>'
+    return s[:i] + re.sub(r"<h2([^>]*)>(.*?)</h2>", repl, s[i:j], flags=re.S) + s[j:]
+
+
+def pagina_cerca():
+    s = pagina("cerca", "Cerca nel sito · Studio Legale Pernorio, Vigevano",
+               "Cerchi tra le guide, le domande frequenti e le competenze dello Studio Legale Pernorio di Vigevano: separazione, eredità, affitti, debiti, multe.",
+               [("Home", BASE + "/"), ("Cerca", clean_url("cerca"))], "Ricerca", "Cerca nel sito",
+               "Scriva la domanda con parole sue. La ricerca legge tutte le guide, le domande frequenti e le pagine dello Studio.",
+               CE.corpo_pagina(), aside_std(), script='<script src="/cerca.js" defer></script>')
+    # la casella sta nel corpo: via i pulsanti Chiama/WhatsApp dal titolo, restano nel riquadro in fondo
+    return re.sub(r"<div class=actions>.*?</div>(</div></section>)", r"\1", s, count=1, flags=re.S)
+
+
 def fix_footer(s):
-    extra = "<li><a href='/strumenti'>Strumenti gratuiti</a></li><li><a href='/costi-avvocato'>Costi e preventivo</a></li><li><a href='/colloquio-online'>Colloquio online</a></li>"
+    extra = "<li><a href='/strumenti'>Strumenti gratuiti</a></li><li><a href='/costi-avvocato'>Costi e preventivo</a></li><li><a href='/colloquio-online'>Colloquio online</a></li><li><a href='/cerca'>Cerca nel sito</a></li>"
     s = s.replace("<li><a href='/domande'>Domande frequenti</a></li>", "<li><a href='/domande'>Domande frequenti</a></li>" + extra, 1)
     zone = " · ".join(f"<a href='/{c['slug']}'>{esc(c['nome'])}</a>" for c in C.COMUNI)
     blocco = f'<div class="fzones"><span>Dove operiamo:</span> <a href=\'/\'>Vigevano</a> · {zone} · <a href=\'/{C.LOMELLINA["slug"]}\'>Lomellina</a></div>\n'
@@ -803,7 +854,10 @@ def fix_privacy(s):
            "<p><b>Calcolatori e strumenti per assistenti IA.</b> I calcolatori del sito funzionano nel browser e non inviano allo Studio i dati inseriti. "
            "Il servizio per assistenti IA all'indirizzo /mcp e gli strumenti WebMCP restituiscono solo informazioni pubbliche e calcoli: "
            "non chiedono e non conservano dati personali, salvo i normali registri tecnici del fornitore di hosting (Netlify, Inc.). "
-           "La funzione che prepara una richiesta di contatto si limita a precompilare il modulo nel browser: l'invio resta sempre una scelta della persona.</p>\n")
+           "La funzione che prepara una richiesta di contatto si limita a precompilare il modulo nel browser: l'invio resta sempre una scelta della persona.</p>\n"
+           "<p><b>Ricerca nel sito.</b> La ricerca della pagina Cerca avviene per intero nel browser: le parole cercate non vengono inviate allo Studio né registrate. "
+           "Il servizio di ricerca per assistenti IA (/api/cerca) restituisce solo testi pubblici del sito; lo Studio conta quante volte viene usato e da quale assistente, "
+           "mai il testo delle domande.</p>\n")
     return s.replace("<p><b>Diritti.</b>", add + MISURA_TXT + "<p><b>Diritti.</b>", 1)
 
 
@@ -858,7 +912,7 @@ CSS_EXTRA += """
 def build_css():
     fonts = open(os.path.join(STATIC, "fonts", "fonts.css"), encoding="utf-8").read()
     css = open(os.path.join(SRC, "style.css"), encoding="utf-8").read()
-    return fonts + "\n" + css + CSS_EXTRA + CO.CSS
+    return fonts + "\n" + css + CSS_EXTRA + CO.CSS + CE.CSS
 
 
 # ---------------------------------------------------------------------------
@@ -1112,31 +1166,48 @@ def csp(tutte):
 
 
 def scrivi_agenti(tutte, indicizzabili):
-    """File per agenti: Markdown di ogni pagina, indice di ricerca, agenti.js, robots.txt."""
-    indice = []
+    """File per agenti: Markdown di ogni pagina, indici di ricerca, agenti.js, robots.txt, server MCP, API di ricerca."""
+    indice, md, meta = [], {}, {}
     for slug in indicizzabili:
         s = tutte[slug]
+        md[slug] = AG.pagina_md(slug, s, OGGI)
         with open(os.path.join(DIST, AG.md_di(slug).lstrip("/")), "w", encoding="utf-8") as fh:
-            fh.write(AG.pagina_md(slug, s, OGGI))
+            fh.write(md[slug])
         t = html.unescape(re.search(r"<title>(.*?)</title>", s, re.S).group(1).strip())
         m = re.search(r'<meta name="description" content="([^"]*)">', s)
-        h2 = " ".join(html.unescape(re.sub(r"<[^>]+>", "", x)) for x in re.findall(r"<h2[^>]*>(.*?)</h2>", s, re.S))
-        indice.append({"t": t, "d": html.unescape(m.group(1)) if m else "", "k": h2[:600], "u": clean_url(slug), "m": BASE + AG.md_di(slug)})
+        d = html.unescape(m.group(1)) if m else ""
+        meta[slug] = (t, d)
+        h2 = " · ".join(x for x in (html.unescape(re.sub(r"<[^>]+>", "", x)).strip() for x in re.findall(r"<h2[^>]*>(.*?)</h2>", s, re.S))
+                        if x.lower() not in CE.SEZIONI_ESCLUSE and x.lower() not in CE.RIGHE_ESCLUSE)
+        indice.append({"t": t, "d": d, "k": h2[:600], "u": clean_url(slug), "m": BASE + AG.md_di(slug)})
     with open(os.path.join(DIST, "cerca.json"), "w", encoding="utf-8") as fh:
         json.dump(indice, fh, ensure_ascii=False, separators=(",", ":"))
+    # Ricerca sul testo completo: indice dei passaggi, motore per il browser, API pubblica
+    ix = CE.indice(md, meta)
+    with open(os.path.join(DIST, "cerca-testo.json"), "w", encoding="utf-8") as fh:
+        json.dump(ix, fh, ensure_ascii=False, separators=(",", ":"))
+    with open(os.path.join(DIST, "cerca.js"), "w", encoding="utf-8") as fh:
+        fh.write(CE.pagina_js())
+    with open(os.path.join(DIST, "opensearch.xml"), "w", encoding="utf-8") as fh:
+        fh.write(CE.OPENSEARCH)
     with open(os.path.join(DIST, "agenti.js"), "w", encoding="utf-8") as fh:
         fh.write(AG.agenti_js(dati_studio()))
-    # Server MCP (Netlify Function) e scheda di scoperta
+    # Server MCP e API di ricerca (Netlify Functions), scheda di scoperta, OpenAPI
     versione = OGGI.replace("-", ".")
     os.makedirs(FUNZIONI, exist_ok=True)
     with open(os.path.join(FUNZIONI, "mcp.mjs"), "w", encoding="utf-8") as fh:
-        fh.write(AG.mcp_function(dati_studio(), indice, versione))
+        fh.write(AG.mcp_function(dati_studio(), indice, versione, ix, CE.motore_js(), CE.CONTA_JS))
+    with open(os.path.join(FUNZIONI, "cerca.mjs"), "w", encoding="utf-8") as fh:
+        fh.write(CE.api_function(ix))
+    with open(os.path.join(DIST, "openapi.json"), "w", encoding="utf-8") as fh:
+        json.dump(CE.openapi(versione), fh, ensure_ascii=False, indent=1)
     wk = os.path.join(DIST, ".well-known", "mcp")
     os.makedirs(wk, exist_ok=True)
     with open(os.path.join(wk, "server-card.json"), "w", encoding="utf-8") as fh:
         json.dump(AG.server_card(versione), fh, ensure_ascii=False, indent=1)
     with open(os.path.join(DIST, "robots.txt"), "w", encoding="utf-8") as fh:
         fh.write(AG.ROBOTS)
+    return md, ix
 
 
 # ---------------------------------------------------------------------------
@@ -1166,6 +1237,7 @@ def main():
     nuove.update(pagine_strumenti())
     nuove.update(pagine_guide())
     nuove[CO.SLUG] = pagina_colloquio()
+    nuove["cerca"] = pagina_cerca()
 
     calcola_correlate({**pagine, **nuove})
     tutte = {}
@@ -1191,17 +1263,21 @@ def main():
         s = fix_orari_social(s)
         s = fix_urls(s)
         s = fix_ld(s)
-        s = fix_head(s, slug, noindex=slug in ("404", "grazie"))
+        s = fix_head(s, slug, noindex=slug in ("404", "grazie", "cerca"))
         s = fix_nav(s)
+        s = fix_cerca_nav(s, slug)
         s = fix_footer(s)
+        s = ancore_h2(s)
         if slug not in ("404", "grazie"):
             s = fix_agenti(s, slug)
+        if slug == "cerca":
+            s = re.sub(r'<link rel="alternate" type="text/markdown"[^>]*>', "", s)
         tutte[slug] = s
         with open(os.path.join(DIST, slug + ".html"), "w", encoding="utf-8") as fh:
             fh.write(s)
 
     # Sitemap
-    esclusi = {"404", "grazie"}
+    esclusi = {"404", "grazie", "cerca"}
     prio = {"index": "1.0", "attivita": "0.9", "contatti": "0.9", "studio": "0.8"}
     urls = []
     for slug in sorted(tutte, key=lambda x: (x != "index", x)):
@@ -1213,7 +1289,7 @@ def main():
         fh.write('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' + "\n".join(urls) + "\n</urlset>\n")
 
     # robots.txt, Markdown, indice di ricerca e WebMCP
-    scrivi_agenti(tutte, [x for x in tutte if x not in esclusi])
+    md, ix = scrivi_agenti(tutte, [x for x in tutte if x not in esclusi])
 
     # llms.txt e llms-full.txt
     for fn in ("llms.txt", "llms-full.txt"):
@@ -1230,9 +1306,22 @@ def main():
             t += "".join(f"- [{x['titolo_breve']}]({clean_url(x['slug'])}): {x['intro']}\n" for x in C.STRUMENTI)
             t += ("\n## Per agenti e assistenti IA\n\n"
                   f"- Ogni pagina ha una versione Markdown: aggiungere .md all'indirizzo (es. {BASE}/attivita-separazione-divorzio.md, home: {BASE}/index.md)\n"
-                  f"- [Indice di ricerca JSON]({BASE}/cerca.json): titolo, descrizione, URL e versione Markdown di ogni pagina\n"
-                  f"- Server MCP pubblico, senza registrazione: {BASE}/mcp (Streamable HTTP; scheda: {BASE}/.well-known/mcp/server-card.json)\n"
+                  "- Con l'intestazione `Accept: text/markdown` ogni indirizzo risponde direttamente in Markdown\n"
+                  f"- Ricerca sul testo completo, senza registrazione: {BASE}/api/cerca?q=eredita+con+debiti (JSON; aggiungere &formato=md per Markdown). Restituisce i passaggi pertinenti con l'URL del punto esatto da citare. Descrizione OpenAPI: {BASE}/openapi.json\n"
+                  f"- [Indice delle pagine JSON]({BASE}/cerca.json) e [indice dei passaggi]({BASE}/cerca-testo.json): {len(ix['d'])} pagine, {len(ix['p'])} passaggi\n"
+                  f"- [Testo completo di competenze e guide]({BASE}/llms-full.txt)\n"
+                  f"- Server MCP pubblico, senza registrazione: {BASE}/mcp (Streamable HTTP; scheda: {BASE}/.well-known/mcp/server-card.json). Strumenti: cerca_nel_sito, leggi_pagina, search e fetch (formato dei connettori di ChatGPT), calcoli di eredità, imposta di successione e scadenze delle multe\n"
                   "- Strumenti WebMCP nel browser (document.modelContext): informazioni-studio, cerca-nel-sito, calcola-quote-eredita, calcola-imposta-successione, scadenze-multa, prepara-richiesta-allo-studio (non invia nulla senza il click della persona)\n")
+        else:
+            # testo completo di tutte le guide (prima c'erano solo le competenze)
+            t = t.rstrip() + "\n\n# Guide pratiche\n"
+            for slug in sorted(x for x in md if x.startswith("guida-")):
+                corpo = md[slug].split("---", 2)[2].rsplit("\n---\n", 1)[0]
+                corpo = re.sub(r"(?m)^(#+) ", lambda m: "#" * (len(m.group(1)) + 1) + " ", corpo)
+                corpo = re.sub(r"(?s)\n### Parliamo della sua questione\..*$", "", corpo)
+                corpo = "\n\n".join(b for b in corpo.split("\n\n") if b.strip() and b.strip().lower() not in CE.RIGHE_ESCLUSE
+                                    and not b.strip().lower().startswith(CE.INIZI_ESCLUSI))
+                t += f"\n{corpo.strip()}\n\nFonte: {clean_url(slug)}\n"
         with open(os.path.join(DIST, fn), "w", encoding="utf-8") as fh:
             fh.write(t)
 

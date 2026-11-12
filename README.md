@@ -7,6 +7,9 @@ Sorgente del sito https://studiolegalepernorio.com (Netlify, progetto `studioleg
 - `tools/contenuti.py`: testi delle pagine nuove (comuni, costi, gratuito patrocinio, strumenti)
 - `tools/build.py`: applica le correzioni SEO e genera il sito in `dist/`
 - `tools/agenti.py`: strumenti WebMCP, versioni Markdown, grafo delle entità, robots.txt per gli assistenti IA
+- `tools/cerca.py`: ricerca sul testo completo, uguale per persone e IA. Indice dei passaggi (`/cerca-testo.json`), motore (`/cerca.js`), pagina `/cerca`, API `/api/cerca?q=` (funzione `functions/cerca.mjs`, generata), `openapi.json`, `opensearch.xml`. Sinonimi del linguaggio comune in `SINONIMI`
+- `tools/prova_cerca.mjs`: 30 domande da cliente con la pagina attesa (`node tools/prova_cerca.mjs -v`); la lancia anche l'audit
+- `netlify/edge-functions/markdown.js`: chi chiede una pagina con `Accept: text/markdown` riceve la versione Markdown
 - `tools/audit.py`: audit SEO, GEO e agenti IA di `dist/`, scrive `AUDIT.md` (lanciarlo dopo ogni build)
 - `tools/indexnow.py`: avvisa Bing e IndexNow degli URL, solo dopo la pubblicazione
 - `tools/fonti.py`: fonti normative delle guide con link Normattiva (`python3 tools/fonti.py --verifica` controlla i link)

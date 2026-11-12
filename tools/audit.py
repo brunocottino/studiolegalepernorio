@@ -240,6 +240,33 @@ def main():
         p("info", "Nessuna scheda del server MCP in /.well-known/mcp/server-card.json")
     if not os.path.exists(os.path.join(ROOT, "functions", "mcp.mjs")):
         p("info", "Nessun server MCP generato (functions/mcp.mjs)")
+    # Ricerca sul testo completo: indice, ancore dei risultati e domande di prova
+    f_ix = os.path.join(DIST, "cerca-testo.json")
+    if not os.path.exists(f_ix):
+        p("errore", "Indice di ricerca cerca-testo.json mancante")
+    else:
+        ix = json.loads(leggi(f_ix))
+        rotte = set()
+        for di, _sez, anc, _t, _f in ix["p"]:
+            slug = ix["d"][di][0][len(BASE):].strip("/") or "index"
+            if anc and f'id="{anc}"' not in pagine.get(slug, ""):
+                rotte.add(f"{slug}#{anc}")
+        if rotte:
+            p("errore", "Risultati di ricerca che puntano a un paragrafo inesistente: " + ", ".join(sorted(rotte)[:10]))
+        import subprocess
+        try:
+            r = json.loads(subprocess.run(["node", os.path.join(ROOT, "tools", "prova_cerca.mjs")], capture_output=True, text=True, timeout=60).stdout.strip().splitlines()[-1])
+            for x in r["fallite"]:
+                p("avviso", f"Ricerca: la pagina attesa non è tra le prime tre per «{x}»")
+            info.append(f"Ricerca: {len(ix['d'])} pagine, {len(ix['p'])} passaggi; {r['riuscite']} domande di prova su {r['prove']} trovano la pagina giusta tra le prime tre")
+        except Exception as e:  # node assente: la prova si salta
+            info.append(f"Ricerca: prova non eseguita ({e.__class__.__name__})")
+    for fn in (os.path.join(ROOT, "functions", "cerca.mjs"), os.path.join(DIST, "openapi.json"), os.path.join(DIST, "opensearch.xml"),
+               os.path.join(ROOT, "netlify", "edge-functions", "markdown.js")):
+        if not os.path.exists(fn):
+            p("avviso", f"{os.path.relpath(fn, ROOT)} mancante")
+    if '"SearchAction"' not in pagine.get("index", ""):
+        p("info", "WebSite senza SearchAction")
     tw = sorted(ratio.items(), key=lambda x: x[1])[:3]
     info.append("Token weight più basso: " + ", ".join(f"{k} {v:.0%}" for k, v in tw))
 
