@@ -155,3 +155,9 @@ Niente è stato pubblicato su Netlify: le modifiche sono su GitHub, nel ramo di 
 ## Argomenti cercati ma senza una pagina
 
 Provando domande nuove, questi temi non hanno contenuto: gratuito patrocinio, liti di vicinato (rumori, animali), danni da animali. Sono candidati per le prossime guide.
+
+## Pubblicazione (12 novembre 2026)
+
+Pubblicato in produzione con il permesso di Bruno (deploy 6af5d77dfe1bb5a227811005). Controlli sul sito vero: `/cerca`, `/api/cerca`, `/mcp` (search e fetch), risposta Markdown con `Accept: text/markdown`, ancore dei paragrafi e CSP funzionano; nessun errore JavaScript in un browser reale. IndexNow ha ricevuto i 67 URL.
+
+**Da sistemare: la build su Netlify non parte più.** Il 12/11 `python3 tools/build.py` fallisce sui server di Netlify ("Build script returned non-zero exit code: 2") anche con la versione dell'8/11, che allora era passata: il problema è nel loro ambiente, non nel codice. In locale la build e `netlify build --offline` passano. Per pubblicare ho caricato il sito già costruito qui (`dist/` e `functions/`), con un `netlify.toml` temporaneo che ha come comando un semplice `echo`. Il `netlify.toml` del repository non è stato cambiato. Per capire la causa serve il log del deploy fallito, visibile solo dal pannello Netlify (Deploys, deploy 6af5d67efbf7b3f65c3db3ff).
