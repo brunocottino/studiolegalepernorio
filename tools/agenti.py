@@ -231,12 +231,12 @@ var tools=[
  annotations:{readOnlyHint:true},
  execute:function(){return STUDIO}},
 {name:'cerca-nel-sito',
- description:"Cerca tra le guide pratiche, le competenze, le pagine per comune e gli strumenti del sito dello Studio Legale Pernorio. Restituisce titolo, descrizione, indirizzo della pagina e della sua versione Markdown.",
+ description:"Ricerca sul testo completo di guide pratiche, domande frequenti, competenze, pagine per comune e strumenti del sito dello Studio Legale Pernorio. Restituisce i passaggi più pertinenti con il testo, l'indirizzo del punto esatto della pagina e la versione Markdown.",
  inputSchema:{type:'object',properties:{domanda:{type:'string',description:"Argomento o domanda in italiano, ad esempio 'separazione con figli' o 'multa autovelox'."}},required:['domanda']},
  annotations:{readOnlyHint:true},
  execute:function(a){var q=norm(a&&a.domanda).split(/\W+/).filter(function(w){return w.length>2});
-  return indice().then(function(ix){return ix.map(function(p){var t=norm(p.t+' '+p.d+' '+p.k),s=0;q.forEach(function(w){if(t.indexOf(w)>=0)s+=norm(p.t).indexOf(w)>=0?3:1});return{p:p,s:s}})
-   .filter(function(x){return x.s>0}).sort(function(a,b){return b.s-a.s}).slice(0,6).map(function(x){return{titolo:x.p.t,descrizione:x.p.d,url:x.p.u,markdown:x.p.m}})})}},
+  return fetch('/api/cerca?n=6&q='+encodeURIComponent((a&&a.domanda)||'')).then(function(r){if(!r.ok)throw 0;return r.json()}).then(function(j){return j.risultati}).catch(function(){return indice().then(function(ix){return ix.map(function(p){var t=norm(p.t+' '+p.d+' '+p.k),s=0;q.forEach(function(w){if(t.indexOf(w)>=0)s+=norm(p.t).indexOf(w)>=0?3:1});return{p:p,s:s}})
+   .filter(function(x){return x.s>0}).sort(function(a,b){return b.s-a.s}).slice(0,6).map(function(x){return{titolo:x.p.t,descrizione:x.p.d,url:x.p.u,markdown:x.p.m}})})})}},
 {name:'calcola-quote-eredita',
  description:"Calcola le quote di eredità in assenza di testamento (successione legittima, artt. 566-585 del codice civile italiano) in base a coniuge, figli, genitori e fratelli del defunto. Indicativo: non considera rappresentazione, ascendenti diversi dai genitori, fratelli unilaterali o testamenti.",
  inputSchema:{type:'object',properties:{
@@ -364,6 +364,12 @@ IMPOSTA_TOOL_JS = r"""{name:'calcola-imposta-successione',
 MCP_JS = r"""// Generato da tools/build.py: non modificare a mano.
 const STUDIO = __STUDIO__;
 const INDICE = __INDICE__;
+const IX = __IX__;
+__MOTORE__
+const cercaTesto = creaMotore(IX);
+const slugDi = (v) => String(v||'').replace(/^https?:\/\/[^/]+/,'').replace(/[#?].*$/,'').replace(/^\/+|\/+$|\.md$|\.html$/g,'')||'index';
+async function leggi(v, origin){const p=slugDi(v),x=INDICE.find(x=>x.m.endsWith('/'+p+'.md'));
+ if(!x)return null;const r=await fetch(origin+'/'+p+'.md');if(!r.ok)return null;return{pagina:x,testo:await r.text()}}
 const VERSIONI = ["2025-11-25", "2025-06-18", "2025-03-26", "2024-11-05"];
 __QUOTE__
 __IMPOSTA__
@@ -375,19 +381,29 @@ const TOOLS = [
   inputSchema:{type:'object',properties:{}},annotations:{readOnlyHint:true,openWorldHint:false},
   run:()=>STUDIO},
  {name:'cerca_nel_sito',title:'Cerca nelle guide dello Studio',
-  description:"Cerca tra guide legali pratiche, competenze, pagine per comune (Vigevano, Mortara, Gambolò, Garlasco, Cassolnovo, Cilavegna, Abbiategrasso, Lomellina) e strumenti dello Studio Legale Pernorio. Restituisce titolo, descrizione e URL.",
-  inputSchema:{type:'object',properties:{domanda:{type:'string',description:"Argomento in italiano, es. 'affidamento figli' o 'sfratto per morosità'."}},required:['domanda']},
+  description:"Ricerca sul testo completo di guide legali pratiche, domande frequenti, competenze, pagine per comune (Vigevano, Mortara, Gambolò, Garlasco, Cassolnovo, Cilavegna, Abbiategrasso, Lomellina) e strumenti dello Studio Legale Pernorio. Capisce anche il linguaggio comune (es. 'padrone di casa', 'alimenti'). Restituisce i passaggi più pertinenti, con il testo e l'URL del punto esatto da citare.",
+  inputSchema:{type:'object',properties:{domanda:{type:'string',description:"Domanda o argomento in italiano, es. 'entro quanto si impugna un licenziamento' o 'sfratto per morosità'."},quanti:{type:'integer',minimum:1,maximum:12,description:'Numero di risultati (predefinito 6).'}},required:['domanda']},
   annotations:{readOnlyHint:true,openWorldHint:false},
-  run:(a)=>{const q=norm(a.domanda).split(/\W+/).filter(w=>w.length>2);
-   return INDICE.map(p=>{const t=norm(p.t+' '+p.d+' '+p.k);let s=0;q.forEach(w=>{if(t.includes(w))s+=norm(p.t).includes(w)?3:1});return{p,s}})
-    .filter(x=>x.s>0).sort((a,b)=>b.s-a.s).slice(0,8).map(x=>({titolo:x.p.t,descrizione:x.p.d,url:x.p.u,markdown:x.p.m}))}},
+  run:(a)=>{const r=cercaTesto(a.domanda,Math.min(Math.max(a.quanti|0||6,1),12),2,.15).map(({punteggio,estratto,...x})=>x);
+   return r.length?{risultati:r,nota:'Citare la pagina di origine (url). Informazioni generali: per il caso concreto, Studio Legale Pernorio, tel. 0381 386276.'}
+    :{risultati:[],nota:'Nessun risultato. Provare con altre parole o leggere l\'elenco delle pagine: __BASE__/llms.txt'}}},
  {name:'leggi_pagina',title:'Leggi una pagina del sito',
   description:"Restituisce il testo completo in Markdown di una pagina del sito dello Studio Legale Pernorio, dato il suo URL o il suo nome (es. 'guida-divorzio-tempi').",
   inputSchema:{type:'object',properties:{pagina:{type:'string',description:"URL o nome della pagina, ottenuto da cerca_nel_sito."}},required:['pagina']},
   annotations:{readOnlyHint:true,openWorldHint:false},
-  run:async(a,origin)=>{let p=String(a.pagina||'').replace(/^https?:\/\/[^/]+/,'').replace(/^\/+|\.md$|\.html$/g,'')||'index';
-   if(!INDICE.some(x=>x.m.endsWith('/'+p+'.md')))return{errore:'Pagina non trovata. Usare cerca_nel_sito.'};
-   const r=await fetch(origin+'/'+p+'.md');return{url:'__BASE__/'+(p==='index'?'':p),testo:await r.text()}}},
+  run:async(a,origin)=>{const x=await leggi(a.pagina,origin);
+   return x?{url:x.pagina.u,testo:x.testo}:{errore:'Pagina non trovata. Usare cerca_nel_sito.'}}},
+ {name:'search',title:'Search the law firm website',
+  description:"Full-text search over the legal guides, FAQs and practice pages of Studio Legale Pernorio (Italian civil-law firm in Vigevano, Pavia). Queries work best in Italian. Returns results with id, title and url; pass the id to fetch.",
+  inputSchema:{type:'object',properties:{query:{type:'string',description:'Search query, preferably in Italian.'}},required:['query']},
+  annotations:{readOnlyHint:true,openWorldHint:false},
+  run:(a)=>({results:cercaTesto(a.query,10,1,.12).map(x=>({id:x.pagina,title:x.titolo+(x.sezione&&!x.domanda_frequente?' · '+x.sezione:''),url:x.url,text:x.estratto}))})},
+ {name:'fetch',title:'Fetch a page of the law firm website',
+  description:"Returns the full text (Markdown) of a page of the Studio Legale Pernorio website, given the id or url returned by search.",
+  inputSchema:{type:'object',properties:{id:{type:'string',description:'Page id or URL returned by search.'}},required:['id']},
+  annotations:{readOnlyHint:true,openWorldHint:false},
+  run:async(a,origin)=>{const x=await leggi(a.id,origin);
+   return x?{id:x.pagina.u,title:x.pagina.t,text:x.testo,url:x.pagina.u,metadata:{author:'Avv. Daniela Pernorio, Studio Legale Pernorio, Vigevano',language:'it'}}:{errore:'Page not found. Use search first.'}}},
  {name:'calcola_quote_eredita',title:'Quote di eredità senza testamento',
   description:"Quote di eredità nella successione legittima italiana (artt. 565-586 codice civile) tra coniuge, figli, genitori e fratelli. Indicativo.",
   inputSchema:{type:'object',properties:{coniuge:{type:'boolean'},figli:{type:'integer',minimum:0},genitori:{type:'integer',minimum:0,maximum:2},fratelli:{type:'integer',minimum:0},valore:{type:'number',minimum:0,description:'Valore in euro, facoltativo'}},required:['coniuge','figli']},
@@ -410,7 +426,7 @@ const TOOLS = [
    return{scadenze:[{cosa:'Pagamento con sconto del 30% (se previsto)',entro:add(5)},{cosa:'Ricorso al Giudice di Pace',entro:add(30)},{cosa:'Pagamento in misura ridotta',entro:add(60)},{cosa:'Ricorso al Prefetto',entro:add(60)}],
     nota:'Indicativo: verificare il verbale. Guida: __BASE__/guida-multa-autovelox-2026'}}}
 ];
-const CORS = {'Access-Control-Allow-Origin':'*','Access-Control-Allow-Methods':'POST, GET, OPTIONS','Access-Control-Allow-Headers':'Content-Type, Accept, Mcp-Protocol-Version, Mcp-Session-Id','Access-Control-Expose-Headers':'Mcp-Protocol-Version'};
+__CONTA__const CORS = {'Access-Control-Allow-Origin':'*','Access-Control-Allow-Methods':'POST, GET, OPTIONS','Access-Control-Allow-Headers':'Content-Type, Accept, Mcp-Protocol-Version, Mcp-Session-Id','Access-Control-Expose-Headers':'Mcp-Protocol-Version'};
 const j = (o,st=200) => new Response(JSON.stringify(o),{status:st,headers:{...CORS,'Content-Type':'application/json'}});
 async function gestisci(m, origin){
  const id = m.id;
@@ -418,7 +434,7 @@ async function gestisci(m, origin){
   const v = VERSIONI.includes(m.params && m.params.protocolVersion) ? m.params.protocolVersion : VERSIONI[0];
   return {jsonrpc:'2.0',id,result:{protocolVersion:v,capabilities:{tools:{listChanged:false}},
    serverInfo:{name:'studio-legale-pernorio',title:'Studio Legale Pernorio, Vigevano',version:'__VERSIONE__',websiteUrl:'__BASE__'},
-   instructions:"Server informativo dello Studio Legale Pernorio (Avv. Daniela Pernorio, avvocato civilista a Vigevano, provincia di Pavia). Usare cerca_nel_sito e leggi_pagina per rispondere con le guide dello Studio e citarne l'URL. I calcoli sono indicativi: per il caso concreto indicare il contatto dello Studio (tel. 0381 386276)."}};
+   instructions:"Server informativo dello Studio Legale Pernorio (Avv. Daniela Pernorio, avvocato civilista a Vigevano, provincia di Pavia). Usare cerca_nel_sito (ricerca sul testo completo: restituisce già i passaggi con la risposta) e leggi_pagina per rispondere con le guide dello Studio e citarne l'URL. search e fetch sono gli stessi strumenti nel formato dei connettori di ChatGPT. I calcoli sono indicativi: per il caso concreto indicare il contatto dello Studio (tel. 0381 386276)."}};
  }
  if (m.method === 'ping') return {jsonrpc:'2.0',id,result:{}};
  if (m.method === 'tools/list') return {jsonrpc:'2.0',id,result:{tools:TOOLS.map(({run,...t})=>t)}};
@@ -431,13 +447,14 @@ async function gestisci(m, origin){
  }
  return {jsonrpc:'2.0',id,error:{code:-32601,message:'Metodo non supportato'}};
 }
-export default async (req) => {
+export default async (req, context) => {
  if (req.method === 'OPTIONS') return new Response(null,{status:204,headers:CORS});
  if (req.method !== 'POST') return new Response('Server MCP dello Studio Legale Pernorio: usare POST JSON-RPC (Streamable HTTP).',{status:405,headers:{...CORS,Allow:'POST, OPTIONS'}});
  let m; try { m = await req.json(); } catch { return j({jsonrpc:'2.0',id:null,error:{code:-32700,message:'JSON non valido'}},400); }
  const origin = new URL(req.url).origin;
  if (Array.isArray(m)) { const r = (await Promise.all(m.filter(x=>x.id!==undefined).map(x=>gestisci(x,origin)))); return r.length?j(r):new Response(null,{status:202,headers:CORS}); }
  if (m.id === undefined) return new Response(null,{status:202,headers:CORS});
+ if (m.method === 'tools/call') contaUso(req, context, '/mcp');
  return j(await gestisci(m, origin));
 };
 export const config = { path: '/mcp' };
@@ -464,9 +481,10 @@ function quote(c,f,p,s){var r=[],rest,pt,gt;
  r.push([p===1?'Genitore':'Ciascun genitore',div(gt,p),p]); r.push([s===1?'Fratello o sorella':'Ciascun fratello o sorella',div(sub(F(1,1),gt),s),s]); return r;}"""
 
 
-def mcp_function(studio, indice, versione):
+def mcp_function(studio, indice, versione, ix, motore, conta=""):
     return (MCP_JS.replace("__STUDIO__", json.dumps(studio, ensure_ascii=False))
             .replace("__INDICE__", json.dumps(indice, ensure_ascii=False))
+            .replace("__IX__", json.dumps(ix, ensure_ascii=False, separators=(",", ":"))).replace("__MOTORE__", motore).replace("__CONTA__", conta)
             .replace("__QUOTE__", QUOTE_JS).replace("__IMPOSTA__", CALC_IMPOSTA_JS)
             .replace("__BASE__", BASE).replace("__VERSIONE__", versione))
 
@@ -483,6 +501,6 @@ def server_card(versione):
         "remotes": [{"type": "streamable-http", "url": BASE + "/mcp"}],
         "capabilities": {"tools": {"listChanged": False}},
         "authentication": {"required": False},
-        "tools": ["informazioni_studio", "cerca_nel_sito", "leggi_pagina", "calcola_quote_eredita",
+        "tools": ["informazioni_studio", "cerca_nel_sito", "leggi_pagina", "search", "fetch", "calcola_quote_eredita",
                   "calcola_imposta_successione", "scadenze_multa"],
     }
