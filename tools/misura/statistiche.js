@@ -5,6 +5,8 @@
   var INIZIO = "2026-11-06T17:50:00Z"; // prima di quest'ora: solo prove tecniche
   var IA = ["ChatGPT", "Perplexity", "Gemini", "Claude", "Copilot", "Altre IA"];
   var CONTATTI = ["chiama", "whatsapp", "modulo", "email"];
+  var PAGINE = "__PAGINE__"; // indirizzi veri del sito, scritti dalla build: servono a scartare gli scanner
+  var CONTROLLI = ["/robots.txt", "/sitemap.xml"];
   var NOMI = { chiama: "Chiama", whatsapp: "WhatsApp", modulo: "Modulo inviato", email: "Email" };
   var k = new URLSearchParams(location.hash.slice(1)).get("k") || "";
   try { if (k) localStorage.setItem("slp_k", k); else k = localStorage.getItem("slp_k") || ""; } catch (e) {}
@@ -14,6 +16,17 @@
   function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
   function data(iso) { return iso.slice(0, 10).split("-").reverse().join("/"); }
   function pag(p) { return p === "/" ? "Home" : p.replace(/^\//, "").replace(/-/g, " "); }
+  function tipo(p) {
+    if (p === "/") return "Home";
+    if (/^\/guida-/.test(p) || p === "/guide" || p === "/domande") return "Guide";
+    if (/^\/attivita/.test(p) || p === "/diritto-di-famiglia") return "Pagine per materia (avvocato + materia)";
+    if (/^\/avvocato-/.test(p)) return "Pagine dei comuni";
+    if (/^\/strument/.test(p)) return "Strumenti";
+    if (/^\/(contatti|studio|costi-avvocato|colloquio-online|domiciliazioni)$/.test(p)) return "Studio, costi e contatti";
+    return "Altro";
+  }
+  function locale(x) { return /^\/(attivita|avvocato-)/.test(x.p) || x.p === "/diritto-di-famiglia"; }
+  function vera(p) { return typeof PAGINE === "string" || PAGINE.indexOf(p) !== -1; }
   function conta(lista, chiave) {
     var m = {};
     lista.forEach(function (x) { var v = chiave(x); m[v] = (m[v] || 0) + 1; });
@@ -51,7 +64,12 @@
     var con = ev.filter(function (x) { return CONTATTI.indexOf(x.e) !== -1; });
     return {
       ing: ing, con: con,
-      bot: ev.filter(function (x) { return x.e === "bot"; }),
+      // letture vere: pagine che esistono, senza i controlli di robots e sitemap e senza gli scanner
+      bot: ev.filter(function (x) { return x.e === "bot" && CONTROLLI.indexOf(x.p) === -1 && vera(x.p); }),
+      botCtl: ev.filter(function (x) { return x.e === "bot" && CONTROLLI.indexOf(x.p) !== -1; }),
+      botFinti: ev.filter(function (x) { return x.e === "bot" && CONTROLLI.indexOf(x.p) === -1 && !vera(x.p); }),
+      locali: ing.filter(locale),
+      conZona: ing.filter(function (x) { return x.z; }),
       ia: ing.filter(function (x) { return IA.indexOf(x.f) !== -1; }),
       google: ing.filter(function (x) { return x.f === "Google" || x.f === "Scheda Google"; }),
       tel: con.filter(function (x) { return x.e === "chiama" || x.e === "whatsapp"; })
@@ -95,7 +113,13 @@
     righe.push("Nel periodo: " + pl(A.ing.length, "visita", "visite") + ", " + A.google.length + " da Google, " + A.ia.length + " dalle IA, " + pl(A.con.length, "contatto", "contatti") +
       (A.ing.length ? " (" + Math.round(A.con.length / A.ing.length * 100) + "% delle visite diventa un contatto)." : "."));
     if (top) righe.push("La fonte principale è <b>" + esc(top[0]) + "</b> con " + top[1] + " visite.");
-    if (!A.ia.length && A.bot.length) righe.push("Le IA leggono il sito (" + A.bot.length + " letture dei loro bot) ma non mandano ancora persone.");
+    righe.push("Ingressi sulle pagine locali (materie e comuni): <b>" + A.locali.length + "</b> su " + A.ing.length + ". È il numero che deve crescere: sono le ricerche di chi cerca un avvocato in zona.");
+    if (A.conZona.length) {
+      var lomb = A.conZona.filter(function (x) { return /^Lombardia/.test(x.z); }).length;
+      var zonaSt = A.conZona.filter(function (x) { return /Vigevano|Pavia/.test(x.z); }).length;
+      righe.push("Visite dalla Lombardia: <b>" + Math.round(lomb / A.conZona.length * 100) + "%</b> (" + lomb + " su " + A.conZona.length + " con regione nota), di cui " + zonaSt + " da Vigevano, Lomellina o Pavia.");
+    }
+    if (!A.ia.length && A.bot.length) righe.push("Le IA leggono il sito (" + A.bot.length + " letture di pagine vere) ma non mandano ancora persone.");
     $("verdetto").className = "verdetto " + cls;
     $("verdetto").innerHTML = '<span class="label">Il verdetto</span><p class="v-tit">' + tit + "</p><ul><li>" + righe.join("</li><li>") + "</li></ul>";
 
@@ -106,7 +130,8 @@
       tile(A.ia.length, "da ChatGPT, Gemini e altre IA", delta(A.ia.length, P.ia.length, completo)) +
       tile(A.tel.length, "tocchi su Chiama o WhatsApp", delta(A.tel.length, P.tel.length, completo)) +
       tile(A.ing.length ? Math.round(A.con.length / A.ing.length * 100) + "%" : "–", "visite che diventano contatto", "") +
-      tile(A.bot.length, "letture dei bot IA", delta(A.bot.length, P.bot.length, completo)) +
+      tile(A.locali.length, "ingressi su pagine locali (materie e comuni)", delta(A.locali.length, P.locali.length, completo)) +
+      tile(A.bot.length, "pagine lette dai bot IA", delta(A.bot.length, P.bot.length, completo)) +
       tile(Object.keys(conta(A.bot, function (x) { return x.f; })).length, "IA diverse che leggono il sito", "");
 
     // Dove cresce / cala: fonti, pagine d'ingresso, bot
@@ -145,6 +170,16 @@
     $("pagine").innerHTML = tabella(ordina(conta(A.ing, function (x) { return pag(x.p); })).slice(0, 12), ["Pagina", "Ingressi"], "Nessun ingresso nel periodo.");
     $("pagineContatti").innerHTML = tabella(ordina(conta(A.con, function (x) { return pag(x.p); })), ["Pagina", "Contatti"], "Nessun contatto nel periodo.");
     $("paginaIA").innerHTML = tabella(ordina(conta(A.ia, function (x) { return x.f + " → " + pag(x.p); })), ["IA e pagina d'ingresso", "Visite"], "Nessuna visita da ChatGPT, Gemini, Perplexity, Claude o Copilot nel periodo.");
+    $("tipi").innerHTML = tabella(ordina(conta(A.ing, function (x) { return tipo(x.p); })), ["Tipo di pagina d'ingresso", "Visite"], "Nessuna visita nel periodo.");
+    $("regioni").innerHTML = A.conZona.length
+      ? tabella(ordina(conta(A.conZona, function (x) { return x.z; })).slice(0, 10), ["Regione", "Visite"], "—")
+      : '<p class="vuoto">La regione viene registrata dalla pubblicazione del 15/11/2026 in poi: ancora nessun dato nel periodo.</p>';
+    var conIng = A.con.filter(function (x) { return x.i; });
+    $("contattiIngresso").innerHTML = conIng.length
+      ? tabella(ordina(conta(conIng, function (x) { return pag(x.i) + (x.z ? " · " + x.z : ""); })), ["Pagina da cui era entrato chi ha contattato", "Contatti"], "—")
+      : '<p class="vuoto">Registrata dalla pubblicazione del 15/11/2026 in poi: ancora nessun contatto con questo dato.</p>';
+    $("botNota").textContent = "Contate solo le letture di pagine che esistono. Esclusi nel periodo: " + A.botFinti.length +
+      " tentativi su indirizzi inesistenti (programmi che cercano password fingendosi bot delle IA) e " + A.botCtl.length + " semplici controlli di robots e sitemap.";
     $("bot").innerHTML = tabella(ordina(conta(A.bot, function (x) { return x.f; })), ["Bot", "Letture"], "Nessuna lettura nel periodo.");
     $("botPagine").innerHTML = tabella(ordina(conta(A.bot, function (x) { return pag(x.p); })).slice(0, 12), ["Pagina", "Letture"], "—");
     escludi();

@@ -1,6 +1,7 @@
 /* Misura senza cookie dello Studio Legale Pernorio.
    Conta solo: da dove arriva chi entra nel sito (Google, ChatGPT, Gemini, ...)
-   e i clic su Chiama, WhatsApp e invio dei moduli. Nessun identificativo,
+   e i clic su Chiama, WhatsApp e invio dei moduli, con la pagina da cui la
+   visita era entrata. Nessun identificativo,
    nessun cookie, nessun dato personale: solo totali giornalieri. */
 (function () {
   if (navigator.webdriver || !navigator.sendBeacon) return;
@@ -33,14 +34,15 @@
   }
   function invia(e, f) {
     try {
-      navigator.sendBeacon("/api/conta", JSON.stringify({ e: e, p: location.pathname, f: f || "" }));
+      navigator.sendBeacon("/api/conta", JSON.stringify({ e: e, p: location.pathname, f: f || "", i: e === "ingresso" ? "" : ing }));
     } catch (x) {}
   }
-  var f = fonte(), mem = null;
-  try { mem = sessionStorage.getItem("slp_fonte"); } catch (x) {}
+  var f = fonte(), mem = null, ing = ""; // ing: pagina da cui è entrata la visita
+  try { mem = sessionStorage.getItem("slp_fonte"); ing = sessionStorage.getItem("slp_ingresso") || ""; } catch (x) {}
   if (f) {
+    ing = location.pathname;
     invia("ingresso", f);
-    try { sessionStorage.setItem("slp_fonte", f); } catch (x) {}
+    try { sessionStorage.setItem("slp_fonte", f); sessionStorage.setItem("slp_ingresso", ing); } catch (x) {}
   } else {
     f = mem || "Sconosciuta";
   }

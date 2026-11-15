@@ -10,13 +10,8 @@ Pagine HTML: 71, indicizzabili: 67.
 
 - Nessuno
 
-## Info (15)
+## Info (10)
 
-- `attivita-condominio`: testo visibile al 14% dell'HTML (token weight)
-- `attivita-contratti`: testo visibile al 14% dell'HTML (token weight)
-- `attivita-crisi-impresa`: testo visibile al 15% dell'HTML (token weight)
-- `attivita-lavoro`: testo visibile al 14% dell'HTML (token weight)
-- `attivita-sinistri-responsabilita`: testo visibile al 14% dell'HTML (token weight)
 - `attivita`: testo visibile al 12% dell'HTML (token weight)
 - `contatti`: testo visibile al 12% dell'HTML (token weight)
 - `cookie`: testo visibile al 11% dell'HTML (token weight)
@@ -34,5 +29,5 @@ Pagine HTML: 71, indicizzabili: 67.
 - Pagine dei comuni: somiglianza massima 38% (avvocato-cilavegna / avvocato-gambolo); soglia di allarme 50%
 - Grafo delle entità: /#studio citato in 68 pagine, /#avvocato citato in 46 pagine, /#sito citato in 68 pagine; 67 pagine con nodo WebPage proprio
 - Tutte le guide citano le fonti normative su Normattiva
-- Ricerca: 67 pagine, 510 passaggi; 30 domande di prova su 30 trovano la pagina giusta tra le prime tre
+- Ricerca: 67 pagine, 546 passaggi; 30 domande di prova su 30 trovano la pagina giusta tra le prime tre
 - Token weight più basso: domiciliazioni 8%, 404 9%, grazie 9%

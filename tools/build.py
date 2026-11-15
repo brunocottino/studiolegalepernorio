@@ -14,6 +14,7 @@ import re
 import shutil
 import sys
 from datetime import date
+from urllib.parse import quote
 
 sys.path.insert(0, os.path.dirname(__file__))
 import contenuti as C  # noqa: E402
@@ -23,6 +24,7 @@ import agenti as AG  # noqa: E402
 import fonti as FO  # noqa: E402
 import ricerche as RI  # noqa: E402
 import cerca as CE  # noqa: E402
+import territorio as TE  # noqa: E402
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SRC = os.path.join(ROOT, "src")
@@ -172,6 +174,36 @@ def pagina(slug, title, description, crumbs, label, h1, lead, body, aside, extra
     )
     s = re.sub(r"<main>.*</main>", lambda m: main, s, flags=re.S)
     return s
+
+
+def wa_link(testo):
+    """Indirizzo WhatsApp con il messaggio già scritto."""
+    return "https://wa.me/393333368757?text=" + quote(testo, safe="")
+
+
+def wa_pagina(s, testo):
+    """Sostituisce in tutta la pagina il messaggio WhatsApp generico con quello della pagina."""
+    return s.replace(WA, wa_link(testo))
+
+
+# Collegamenti guide <-> materie, calcolati in main() dalle pagine (riquadro "Competenza" di ogni guida)
+GUIDA_MATERIA = {}   # guida -> pagina della materia
+MATERIA_GUIDE = {}   # pagina della materia -> [(guida, titolo)]
+
+
+def calcola_materie(pagine):
+    for slug, h in pagine.items():
+        if not slug.startswith("guida-"):
+            continue
+        m = (re.search(r"href='/?(attivita-[a-z-]+)'><span class=\"label\">Competenza", h)
+             or re.search(r'href="/?(attivita-[a-z-]+)(?:\.html)?"[^>]*>\s*<span class="?label"?>Competenza', h))
+        if not m:
+            continue
+        titolo = re.sub(r"<[^>]+>", "", html.unescape(re.search(r"<h1[^>]*>(.*?)</h1>", h, re.S).group(1))).strip()
+        GUIDA_MATERIA[slug] = m.group(1)
+        for mat in (m.group(1), TE.SECONDA_MATERIA.get(slug)):
+            if mat:
+                MATERIA_GUIDE.setdefault(mat, []).append((slug, titolo))
 
 
 def aside_std(materia=None, extra=""):
@@ -779,9 +811,25 @@ def fix_pratica(s, key):
             "<p>Prima del colloquio è utile raccogliere i documenti principali con la <a href='/strumento-checklist-separazione'>checklist per la separazione</a>, da spuntare o stampare. Per i costi, vedere <a href='/costi-avvocato'>quanto costa una separazione</a>.</p>"
             "</div>\n" + pannello
         )
+    # Sezione locale e guide collegate (tools/territorio.py): danno alla pagina un contenuto che le altre non hanno
+    locale = ""
+    if key in TE.LOCALE:
+        locale = (f'<div class="card panel article rv"><h2>{esc(TE.TITOLO_LOCALE[key])}</h2>{TE.LOCALE[key]}'
+                  f'<p class="note-s">Indicazioni generali, aggiornate a {TE_AGGIORNATO}.{TE.VERIFICA}</p></div>\n')
+    guide = MATERIA_GUIDE.get("attivita-" + key, [])
+    if guide:
+        voci = "".join(f"<li><a href='/{g}'>{esc(t)}</a></li>" for g, t in guide)
+        locale += (f'<div class="card panel article rv"><h2>Guide dello Studio su {esc(kw)}</h2>'
+                   f"<p>Per orientarsi prima del colloquio, scritte dall'Avv. Daniela Pernorio:</p><ul>{voci}</ul></div>\n")
+    pannello = locale + pannello
     idx = s.find("</div>\n<aside")
     if idx != -1:
         s = s[:idx] + pannello + s[idx:]
+    # WhatsApp anche nell'intestazione, con il messaggio già riferito alla materia
+    m = re.search(r'(<section class="phero">.*?<div class=actions>.*?)(</div></div></section>)', s, re.S)
+    if m and "wa.me" not in m.group(1):
+        s = s.replace(m.group(0), m.group(1) + BTN_WA + m.group(2), 1)
+    s = wa_pagina(s, TE.WA_MATERIA.format(kw=kw))
     tool = STRUMENTI_LINK.get("attivita-" + key)
     if tool is not None:
         s = s.replace('<aside style="display:grid;gap:14px;margin-top:14px">\n', '<aside style="display:grid;gap:14px;margin-top:14px">\n' + strumenti_card(tool), 1)
@@ -795,6 +843,9 @@ def fix_guida(s, slug):
     s = s.replace("<p class=\"note-s\">A cura dello Studio Legale Pernorio, Avv. Daniela Pernorio, Vigevano.",
                   "<p class=\"note-s\">A cura dello Studio Legale Pernorio, <a href='/studio'>Avv. Daniela Pernorio</a>, Vigevano.", 1)
     return s
+
+
+TE_AGGIORNATO = RI.AGGIORNATO
 
 
 HOME_DESC = "Avv. Daniela Pernorio, avvocato civilista a Vigevano (PV): separazioni e divorzi, affidamento dei figli, eredità, sfratti, debiti con banche. Tribunale di Pavia."
@@ -838,8 +889,10 @@ def fix_contatti(s):
 
 MISURA_TXT = ("<p><b>Misura delle visite, senza cookie.</b> Il sito conta in forma aggregata da dove arrivano le visite "
               "(per esempio Google, la scheda Google dello Studio, ChatGPT o altri assistenti IA) e quante volte vengono toccati i pulsanti "
-              "Chiama, WhatsApp e invio dei moduli. Per ogni evento registra solo il tipo, la pagina, la provenienza e l'ora: nessun cookie, "
-              "nessun indirizzo IP, nessun identificativo del dispositivo. La provenienza resta nel browser solo per la durata della visita "
+              "Chiama, WhatsApp e invio dei moduli. Per ogni evento registra solo il tipo, la pagina, la provenienza, la regione e l'ora: nessun cookie, "
+              "nessun identificativo del dispositivo. La regione (per la Lombardia, anche se la visita arriva dalla zona di Vigevano e Lomellina o da Pavia) "
+              "viene ricavata dall'indirizzo IP nel momento della visita: l'indirizzo IP non viene conservato. "
+              "La provenienza e la pagina d'ingresso restano nel browser solo per la durata della visita "
               "(sessionStorage) e si cancella chiudendo la scheda. I dati sono conservati su Netlify, Inc. e servono solo allo Studio "
               "per capire quali pagine sono utili. Conta inoltre, lato server, le letture delle pagine da parte dei programmi automatici "
               "delle intelligenze artificiali.</p>\n")
@@ -1014,10 +1067,19 @@ def cta_guida(s, slug):
     if a == -1:
         return s
     dom, testo = RI.CTA.get(slug, RI.CTA_DEFAULT)
+    mat = [x for x in (GUIDA_MATERIA.get(slug), TE.SECONDA_MATERIA.get(slug)) if x in TE.ANCORA]
+    segue = ""
+    if mat:
+        coll = " e ".join(f"<a href='/{x}'>{esc(TE.ANCORA[x])}</a>" for x in mat)
+        segue = f"<p>Lo Studio segue queste pratiche a Vigevano e in tutta la Lomellina: {coll}.</p>"
+    titolo = re.sub(r"<[^>]+>", "", html.unescape(re.search(r"<h1[^>]*>(.*?)</h1>", s, re.S).group(1))).strip()
+    s = wa_pagina(s, TE.WA_GUIDA.format(titolo=titolo))
+    a = s.find('<article class="card panel article')
+    btn_wa = BTN_WA.replace(WA, wa_link(TE.WA_GUIDA.format(titolo=titolo)))
     box = (
         '<aside class="caso" aria-label="Parlarne con lo Studio">'
-        f'<span class="label">Il suo caso</span><p class="caso-q">{esc(dom)}</p><p>{esc(testo)}</p>'
-        f'<div class="actions">{BTN_CALL}{BTN_WA}</div>'
+        f'<span class="label">Il suo caso</span><p class="caso-q">{esc(dom)}</p><p>{esc(testo)}</p>{segue}'
+        f'<div class="actions">{BTN_CALL}{btn_wa}</div>'
         f'<p class="note-s">Oppure chiami lo <a href="tel:+390381386276">{TEL_TXT}</a> · {ORARI_TXT} · '
         '<a href="/colloquio-online">colloquio anche online</a></p></aside>\n'
     )
@@ -1240,6 +1302,7 @@ def main():
     nuove["cerca"] = pagina_cerca()
 
     calcola_correlate({**pagine, **nuove})
+    calcola_materie({**pagine, **nuove})
     tutte = {}
     for slug, s in list(pagine.items()) + list(nuove.items()):
         if slug.startswith("attivita-"):
@@ -1258,6 +1321,10 @@ def main():
             s = fix_indice_guide(s)
         elif slug == "studio":
             s = fix_studio(s)
+        elif slug.startswith("avvocato-"):
+            nome = next((c["nome"] for c in C.COMUNI if c["slug"] == slug), None)
+            if nome:
+                s = wa_pagina(s, TE.WA_COMUNE.format(nome=nome))
         s = applica_ricerche(s, slug)
         s = cta_guida(s, slug)
         s = fix_orari_social(s)
@@ -1334,6 +1401,19 @@ def main():
     MIS = os.path.join(ROOT, "tools", "misura")
     for fn in ("conta.js", "statistiche.js", "statistiche.html"):
         shutil.copy(os.path.join(MIS, fn), os.path.join(DIST, fn))
+    # Indirizzi che esistono davvero: la pagina delle statistiche scarta le letture dei "bot" su tutto il resto (scanner)
+    veri = {"/"}
+    for radice, _, files in os.walk(DIST):
+        for fn in files:
+            rel = "/" + os.path.relpath(os.path.join(radice, fn), DIST).replace(os.sep, "/")
+            veri.add(rel)
+            if rel.endswith(".html"):
+                veri.add(rel[:-5])
+    veri |= {"/" + x + ".md" for x in tutte} | {"/index.md", "/mcp", "/api/cerca"}
+    st = open(os.path.join(DIST, "statistiche.js"), encoding="utf-8").read()
+    assert '"__PAGINE__"' in st
+    with open(os.path.join(DIST, "statistiche.js"), "w", encoding="utf-8") as fh:
+        fh.write(st.replace('"__PAGINE__"', json.dumps(sorted(veri), ensure_ascii=False)))
     hash_chiave = open(os.path.join(MIS, "chiave.sha256")).read().strip()
     with open(os.path.join(FUNZIONI, "conta.mjs"), "w", encoding="utf-8") as fh:
         fh.write(open(os.path.join(MIS, "conta.mjs"), encoding="utf-8").read().replace("__HASH_CHIAVE__", hash_chiave))

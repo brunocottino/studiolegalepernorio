@@ -70,3 +70,11 @@ description=Studio legale civilista: famiglia, successioni, casa, debiti
 - Recensioni: chiederle a ogni cliente soddisfatto, con il link diretto e senza filtrare prima chi è contento (Google lo vieta). Rispondere a tutte senza citare dettagli della pratica.
 - Il collegamento della scheda Google punta alla home.
 - Ogni sede futura avrà una scheda propria, con l'indirizzo reale.
+
+## Link al sito nella scheda Google (da fare)
+
+Nella scheda Google dello Studio (Google Business Profile → Modifica profilo → Sito web) il link va scritto così:
+
+`https://studiolegalepernorio.com/?utm_source=gbp`
+
+Dal 7 al 15 novembre 2026 le visite riconosciute come "Scheda Google" sono state zero: senza questa aggiunta arrivano mescolate a "Google" o a "Diretto o app" e non si può sapere quanto rende la scheda. Lo stesso vale per il pulsante "Appuntamenti", se usato.
