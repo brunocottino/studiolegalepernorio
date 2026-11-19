@@ -53,6 +53,23 @@
     if (/^tel:/.test(h)) invia("chiama", f);
     else if (/wa\.me|whatsapp/.test(h)) invia("whatsapp", f);
     else if (/^mailto:/.test(h)) invia("email", f);
+    else if (/google\.[a-z.]+\/maps\/dir/.test(h)) invia("indicazioni", f);
   }, true);
   document.addEventListener("submit", function () { invia("modulo", f); }, true);
+
+  // Messaggio sulla distanza dallo Studio, dove la pagina lo prevede (data-dove).
+  // La posizione è quella approssimata della connessione: si usa solo per questo testo e non viene registrata.
+  var box = document.querySelectorAll("[data-dove]");
+  if (box.length && window.fetch) {
+    fetch("/api/dove", { cache: "no-store" }).then(function (r) { return r.ok ? r.json() : {}; }).then(function (d) {
+      var t = "";
+      if (d.vigevano) t = "È a Vigevano: lo Studio è in Via Egidio Sacchetti 14, vicino al centro storico. <a href=\"https://www.google.com/maps/dir/?api=1&destination=Via+Egidio+Sacchetti+14%2C+27029+Vigevano+PV\" target=\"_blank\" rel=\"noopener\">Indicazioni stradali</a>";
+      else if (d.comune && location.pathname !== d.comune.url) t = "Da " + d.comune.nome + " allo Studio: " + d.comune.min + " in auto. <a href=\"" + d.comune.url + "\">Avvocato per chi vive a " + d.comune.nome + "</a>";
+      else if (d.comune) t = "";
+      else if (d.fascia === "Entro 22 km") t = "È a meno di mezz'ora dallo Studio, a Vigevano. <a href=\"/contatti\">Come arrivare e orari</a>";
+      else if (d.fascia) t = "Non abita vicino a Vigevano? Il primo colloquio si può fare online, in videochiamata, con i documenti inviati prima. <a href=\"/colloquio-online\">Colloquio online</a>";
+      if (!t) return;
+      for (var i = 0; i < box.length; i++) { box[i].innerHTML = t; box[i].hidden = false; }
+    }).catch(function () {});
+  }
 })();

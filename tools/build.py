@@ -25,6 +25,7 @@ import fonti as FO  # noqa: E402
 import ricerche as RI  # noqa: E402
 import cerca as CE  # noqa: E402
 import territorio as TE  # noqa: E402
+TE.applica_comuni(C)  # distanze verificate e comuni entro 22 km
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SRC = os.path.join(ROOT, "src")
@@ -260,6 +261,9 @@ def pagine_comuni():
             f'<p class="note-s">Studio Legale Pernorio, Avv. Daniela Pernorio, Via Egidio Sacchetti 14, 27029 Vigevano (PV). Aggiornato a {C.AGGIORNATO}.</p>'
             "</article>" + faq_html(c["faq"])
         )
+        indicazioni = ("https://www.google.com/maps/dir/?api=1&origin=" + quote(nome + ", Italia")
+                       + "&destination=" + quote("Via Egidio Sacchetti 14, 27029 Vigevano PV"))
+        body = body.replace("</article>", f'<p><a class="btn btn-ghost" href="{esc(indicazioni)}" target="_blank" rel="noopener">Indicazioni da {esc(nome)} allo Studio<span class="bi">{ICO_ARR}</span></a></p></article>', 1)
         crumbs = [("Home", BASE + "/"), ("Dove operiamo", clean_url(C.LOMELLINA["slug"])), (nome, None)]
         page_ld = {
             "@context": "https://schema.org",
@@ -645,6 +649,11 @@ def fix_ld(s):
                     "opens": "09:00", "closes": "19:00",
                 }]
                 it["sameAs"] = list(dict.fromkeys((it.get("sameAs") or []) + [INSTAGRAM]))
+                # Area servita: cerchio di 17 km in linea d'aria (circa 22 km di strada) e i comuni con una pagina
+                it["areaServed"] = [
+                    {"@type": "GeoCircle", "geoMidpoint": {"@type": "GeoCoordinates", "latitude": 45.3141, "longitude": 8.8486}, "geoRadius": "17000"},
+                    {"@type": "City", "name": "Vigevano"},
+                ] + [{"@type": "City", "name": c["nome"], "url": clean_url(c["slug"])} for c in C.COMUNI]
                 it.setdefault("hasOfferCatalog", {
                     "@type": "OfferCatalog", "name": "Aree di attività",
                     "itemListElement": [
@@ -828,7 +837,8 @@ def fix_pratica(s, key):
     # WhatsApp anche nell'intestazione, con il messaggio già riferito alla materia
     m = re.search(r'(<section class="phero">.*?<div class=actions>.*?)(</div></div></section>)', s, re.S)
     if m and "wa.me" not in m.group(1):
-        s = s.replace(m.group(0), m.group(1) + BTN_WA + m.group(2), 1)
+        # m.group(2) = "</div></div></section>": la prima chiude i pulsanti, il messaggio va subito dopo
+        s = s.replace(m.group(0), m.group(1) + BTN_WA + '</div><p class="dove" data-dove hidden></p>' + m.group(2)[len("</div>"):], 1)
     s = wa_pagina(s, TE.WA_MATERIA.format(kw=kw))
     tool = STRUMENTI_LINK.get("attivita-" + key)
     if tool is not None:
@@ -854,16 +864,30 @@ HOME_DESC = "Avv. Daniela Pernorio, avvocato civilista a Vigevano (PV): separazi
 def fix_home(s):
     s = re.sub(r'<meta name="description" content="[^"]*">', f'<meta name="description" content="{HOME_DESC}">', s, count=1)
     s = re.sub(r'<meta property="og:description" content="[^"]*">', f'<meta property="og:description" content="{HOME_DESC}">', s, count=1)
-    s = s.replace('<p class="sub">Avv. Daniela Pernorio</p>', '<p class="sub">Avv. Daniela Pernorio, avvocato a Vigevano</p>', 1)
+    s = s.replace('<p class="sub">Avv. Daniela Pernorio</p>', '<p class="sub">Avv. Daniela Pernorio · Ordine degli Avvocati di Pavia</p>', 1)
     s = s.replace('imagesrcset="img/ritratto-daniela-900.webp 900w, img/ritratto-daniela.webp 1600w"',
                   'imagesrcset="img/ritratto-daniela-900.webp 900w, img/ritratto-daniela.webp 793w"')
-    chips = "".join(f"<a class='chip' href='/{c['slug']}'>{esc(c['nome'])}</a>" for c in C.COMUNI)
+    chips = "".join(f"<a class='chip' href='/{c['slug']}'>{esc(c['nome'])} <span class='chip-n'>{esc(c['min'].replace('circa ', ''))}</span></a>" for c in C.COMUNI)
+    # Titolo: anche chi cerca "avvocato Vigevano" ritrova la domanda nel titolo principale
+    s = s.replace('<span class="label">Avvocato civilista · Vigevano</span>', '<span class="label">Vigevano · Lomellina · Abbiatense</span>', 1)
+    s = s.replace("<h1>Studio Legale<br><em>Pernorio</em></h1>",
+                  '<h1>Studio Legale<br><em>Pernorio</em><span class="h1s">Avvocato civilista a Vigevano</span></h1>', 1)
+    # Messaggio sulla distanza, compilato nel browser (conta.js)
+    s = re.sub(r'(<section class="hero.*?<div class="actions">.*?</div>)', r'\1<p class="dove" data-dove hidden></p>', s, count=1, flags=re.S)
+    voci = "".join(
+        f"<a class='card panel rv gcard prob' href='/{u}'><b>{esc(t)}</b><span class=\"note-s\">{esc(d)} →</span></a>"
+        for t, d, u in TE.PROBLEMI)
+    problemi = ('<section class="probs"><div class="wrap"><div class="sec-head rv"><span class="label">Da dove partire</span>'
+                "<h2>Di cosa ha bisogno?</h2><p class=\"lead\" style=\"margin-top:10px\">Scelga la situazione più vicina alla sua: trova cosa si può fare, i tempi e come lavora lo Studio a Vigevano.</p></div>"
+                f'<div class="prob-grid">{voci}</div></div></section>\n')
+    fine_hero = s.find("</section>", s.find("<main")) + len("</section>")
+    s = s[:fine_hero] + "\n" + problemi + s[fine_hero:]
     sez = (
         '<section><div class="wrap"><div class="sec-head rv"><span class="label">Strumenti e territorio</span><h2>Prima di chiamare</h2></div>'
         f'<div class="tools-grid">{card_online()}{strumenti_card()}'
         f'<a class="card panel rv gcard" href="/costi-avvocato"><span class="label">Trasparenza</span><b>Quanto costa un avvocato</b><span class="note-s">Preventivo scritto, voci di costo, spese vive →</span></a>'
         "</div>"
-        f'<div class="card panel rv" style="margin-top:14px"><span class="label">Dove operiamo</span><p style="margin-top:10px">Lo Studio riceve a Vigevano e assiste clienti di tutta la Lomellina e dell\'Abbiatense.</p><div class="chips" style="margin-top:14px">{chips}<a class=\'chip\' href=\'/{C.LOMELLINA["slug"]}\'>Tutta la Lomellina</a></div></div>'
+        f'<div class="card panel rv" style="margin-top:14px"><span class="label">Dove operiamo</span><p style="margin-top:10px">Lo Studio riceve a Vigevano, in Via Egidio Sacchetti 14. Dai comuni qui sotto si arriva in meno di mezz\'ora: il tempo indicato è quello in auto fino allo Studio.</p><div class="chips" style="margin-top:14px">{chips}<a class=\'chip\' href=\'/{C.LOMELLINA["slug"]}\'>Tutta la Lomellina</a></div></div>'
         "</div></section>\n"
     )
     # Inserita prima della sezione "Guide pratiche", altrimenti in fondo al main
@@ -889,9 +913,11 @@ def fix_contatti(s):
 
 MISURA_TXT = ("<p><b>Misura delle visite, senza cookie.</b> Il sito conta in forma aggregata da dove arrivano le visite "
               "(per esempio Google, la scheda Google dello Studio, ChatGPT o altri assistenti IA) e quante volte vengono toccati i pulsanti "
-              "Chiama, WhatsApp e invio dei moduli. Per ogni evento registra solo il tipo, la pagina, la provenienza, la regione e l'ora: nessun cookie, "
+              "Chiama, WhatsApp e invio dei moduli. Per ogni evento registra solo il tipo, la pagina, la provenienza, la regione, la fascia di distanza e l'ora: nessun cookie, "
               "nessun identificativo del dispositivo. La regione (per la Lombardia, anche se la visita arriva dalla zona di Vigevano e Lomellina o da Pavia) "
-              "viene ricavata dall'indirizzo IP nel momento della visita: l'indirizzo IP non viene conservato. "
+              "e la fascia di distanza dallo Studio (entro 22 km, 22-50 km, oltre) vengono ricavate dall'indirizzo IP nel momento della visita: "
+              "l'indirizzo IP e la posizione non vengono conservati. La stessa posizione approssimata serve, solo nel momento della visita, "
+              "a mostrare nella pagina quanto si è lontani dallo Studio. "
               "La provenienza e la pagina d'ingresso restano nel browser solo per la durata della visita "
               "(sessionStorage) e si cancella chiudendo la scheda. I dati sono conservati su Netlify, Inc. e servono solo allo Studio "
               "per capire quali pagine sono utili. Conta inoltre, lato server, le letture delle pagine da parte dei programmi automatici "
@@ -955,6 +981,17 @@ footer .fzones span{text-transform:uppercase;letter-spacing:.16em;font-size:.66r
 
 
 CSS_EXTRA += """
+.dove{margin:14px 0 0;font-size:.92rem;line-height:1.5;color:var(--graphite)}
+.dove a{color:var(--ink);text-decoration:underline;text-underline-offset:3px}
+.chip-n{font-size:.78rem;color:var(--graphite)}
+.prob-grid{display:grid;gap:10px;grid-template-columns:1fr 1fr}
+.prob-grid .prob{padding:16px 14px}
+@media (max-width:639px){.prob b{font-size:1.08rem}.prob .note-s{display:none}}
+@media (min-width:640px){.prob-grid .prob{padding:22px}}
+@media (min-width:1000px){.prob-grid{grid-template-columns:repeat(3,1fr)}}
+.prob b{font-family:var(--display);font-weight:500;font-size:1.3rem;line-height:1.25}
+.prob .note-s{margin-top:6px}
+.probs{padding-top:0}
 .article .caso{margin:30px 0;padding:22px 22px 18px;border-radius:18px;background:color-mix(in srgb,var(--forest) 7%,var(--card));border:1px solid color-mix(in srgb,var(--forest) 22%,transparent)}
 .article .caso .caso-q{font-family:var(--display);font-size:1.45rem;line-height:1.3;margin:8px 0 6px;color:var(--ink)}
 .article .caso p{margin:0 0 10px}
@@ -1079,7 +1116,7 @@ def cta_guida(s, slug):
     box = (
         '<aside class="caso" aria-label="Parlarne con lo Studio">'
         f'<span class="label">Il suo caso</span><p class="caso-q">{esc(dom)}</p><p>{esc(testo)}</p>{segue}'
-        f'<div class="actions">{BTN_CALL}{btn_wa}</div>'
+        f'<div class="actions">{BTN_CALL}{btn_wa}</div><p class="dove" data-dove hidden></p>'
         f'<p class="note-s">Oppure chiami lo <a href="tel:+390381386276">{TEL_TXT}</a> · {ORARI_TXT} · '
         '<a href="/colloquio-online">colloquio anche online</a></p></aside>\n'
     )
@@ -1416,7 +1453,13 @@ def main():
         fh.write(st.replace('"__PAGINE__"', json.dumps(sorted(veri), ensure_ascii=False)))
     hash_chiave = open(os.path.join(MIS, "chiave.sha256")).read().strip()
     with open(os.path.join(FUNZIONI, "conta.mjs"), "w", encoding="utf-8") as fh:
-        fh.write(open(os.path.join(MIS, "conta.mjs"), encoding="utf-8").read().replace("__HASH_CHIAVE__", hash_chiave))
+        def piano(x):
+            import unicodedata
+            return "".join(ch for ch in unicodedata.normalize("NFD", x.lower()) if unicodedata.category(ch) != "Mn").replace("'", "").strip()
+        com = {piano(c["nome"]): [c["nome"], "/" + c["slug"], c["min"].replace("circa ", "circa ")] for c in C.COMUNI}
+        src = open(os.path.join(MIS, "conta.mjs"), encoding="utf-8").read()
+        assert '"__COMUNI__"' in src
+        fh.write(src.replace("__HASH_CHIAVE__", hash_chiave).replace('"__COMUNI__"', json.dumps(com, ensure_ascii=False)))
 
     # Redirect e header Netlify
     shutil.copy(os.path.join(ROOT, "netlify", "_redirects"), os.path.join(DIST, "_redirects"))

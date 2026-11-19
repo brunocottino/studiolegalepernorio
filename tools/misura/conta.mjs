@@ -1,12 +1,13 @@
 // Funzione Netlify della misura senza cookie (copiata in functions/ da tools/build.py).
 // POST /api/conta          registra un evento (ingresso, chiama, whatsapp, email, modulo, bot)
 // GET  /api/statistiche?k= totali per fonte e per giorno, protetti da chiave
+// GET  /api/dove           distanza approssimata di chi visita dallo Studio, per i messaggi della pagina (non registra nulla)
 // Un blob per evento: nessun contatore da aggiornare, quindi nessuna scrittura persa.
 import { getStore } from "@netlify/blobs";
 import { createHash, randomUUID } from "node:crypto";
 
 const HASH_CHIAVE = "__HASH_CHIAVE__";
-const EVENTI = new Set(["ingresso", "chiama", "whatsapp", "email", "modulo", "bot"]);
+const EVENTI = new Set(["ingresso", "chiama", "whatsapp", "email", "modulo", "indicazioni", "bot"]);
 const negozio = () => getStore({ name: "misura", consistency: "strong" });
 const pulisci = (s, n) => String(s || "").replace(/[^\p{L}\p{N} ./_()-]/gu, "").slice(0, n);
 const giorno = (d) => d.toISOString().slice(0, 10);
@@ -19,6 +20,32 @@ const REGIONI = { 21: "Piemonte", 23: "Valle d'Aosta", 25: "Lombardia", 32: "Tre
 const ZONA = new Set(["vigevano", "mortara", "gambolo", "garlasco", "cassolnovo", "cilavegna", "abbiategrasso", "parona", "robbio", "tromello",
   "dorno", "mede", "gravellona lomellina", "sannazzaro de burgondi", "sartirana lomellina", "ozzero", "morimondo", "cassinetta di lugagnano"]);
 const piano = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f']/g, "").trim();
+// Distanza dallo Studio (Via Egidio Sacchetti 14) in linea d'aria, dalla posizione approssimata della connessione.
+// 17 km in linea d'aria corrispondono a circa 22 km di strada (calcolo del 19/11/2026 sui comuni vicini).
+const STUDIO = [45.3141, 8.8486];
+export function km(geo) {
+  const la = Number(geo && geo.latitude), lo = Number(geo && geo.longitude);
+  if (!isFinite(la) || !isFinite(lo) || (la === 0 && lo === 0)) return null;
+  const r = Math.PI / 180, dla = (la - STUDIO[0]) * r, dlo = (lo - STUDIO[1]) * r;
+  const a = Math.sin(dla / 2) ** 2 + Math.cos(STUDIO[0] * r) * Math.cos(la * r) * Math.sin(dlo / 2) ** 2;
+  return 6371 * 2 * Math.asin(Math.sqrt(a));
+}
+export function fascia(geo) {
+  const d = km(geo);
+  if (d === null) return "";
+  if (d <= 17) return "Entro 22 km";
+  if (d <= 40) return "22-50 km";
+  return "Oltre 50 km";
+}
+// Comuni con una pagina sul sito: nome normalizzato -> [nome, indirizzo della pagina, minuti]. Scritto dalla build.
+const COMUNI = "__COMUNI__";
+export function dove(geo) {
+  const d = km(geo), c = piano(geo && geo.city);
+  const out = { fascia: fascia(geo) };
+  if (c === "vigevano") out.vigevano = true;
+  else if (typeof COMUNI === "object" && COMUNI[c] && d !== null && d <= 30) out.comune = { nome: COMUNI[c][0], url: COMUNI[c][1], min: COMUNI[c][2] };
+  return out;
+}
 export function zona(geo) {
   if (!geo || !geo.country || !geo.country.code) return "";
   if (geo.country.code !== "IT") return "Estero";
@@ -39,12 +66,12 @@ async function registra(req, context) {
   const ora = new Date();
   const ev = { e: d.e, p: pulisci(d.p, 120), f: pulisci(d.f, 40), t: ora.toISOString() };
   if (d.e !== "bot") {
-    try { ev.z = pulisci(zona(context && context.geo), 40); } catch { ev.z = ""; }
+    try { ev.z = pulisci(zona(context && context.geo), 40); ev.d = fascia(context && context.geo); } catch { ev.z = ""; ev.d = ""; }
     if (d.e !== "ingresso") ev.i = pulisci(d.i, 120);
   }
   // I dati stanno anche nella chiave: le statistiche si leggono con un solo elenco, senza aprire ogni evento
   const enc = encodeURIComponent;
-  const chiave = `ev/${giorno(ora)}/${ora.getTime()}-${randomUUID().slice(0, 8)}~${enc(ev.e)}~${enc(ev.f)}~${enc(ev.p)}~${enc(ev.z || "")}~${enc(ev.i || "")}`;
+  const chiave = `ev/${giorno(ora)}/${ora.getTime()}-${randomUUID().slice(0, 8)}~${enc(ev.e)}~${enc(ev.f)}~${enc(ev.p)}~${enc(ev.z || "")}~${enc(ev.i || "")}~${enc(ev.d || "")}`;
   await negozio().setJSON(chiave.slice(0, 590), ev);
   return new Response(null, { status: 204 });
 }
@@ -65,7 +92,7 @@ async function statistiche(url) {
       if (parti.length >= 4) {
         const dec = decodeURIComponent;
         // dal 15/11/2026 la chiave porta anche regione (z) e pagina d'ingresso (i); le chiavi più vecchie hanno 4 parti
-        return { e: dec(parti[1]), f: dec(parti[2]), p: dec(parti[3]), z: dec(parti[4] || ""), i: dec(parti[5] || ""), t: new Date(+parti[0].split("-")[0]).toISOString() };
+        return { e: dec(parti[1]), f: dec(parti[2]), p: dec(parti[3]), z: dec(parti[4] || ""), i: dec(parti[5] || ""), d: dec(parti[6] || ""), t: new Date(+parti[0].split("-")[0]).toISOString() };
       }
       return st.get(b.key, { type: "json" }); // eventi salvati prima del 08/11/2026
     }));
@@ -81,7 +108,12 @@ export default async (req, context) => {
   const url = new URL(req.url);
   if (req.method === "POST" && url.pathname === "/api/conta") return registra(req, context);
   if (req.method === "GET" && url.pathname === "/api/statistiche") return statistiche(url);
+  if (req.method === "GET" && url.pathname === "/api/dove") {
+    let d = {};
+    try { d = dove(context && context.geo); } catch { d = {}; }
+    return Response.json(d, { headers: { "cache-control": "private, no-store" } });
+  }
   return new Response("", { status: 405 });
 };
 
-export const config = { path: ["/api/conta", "/api/statistiche"] };
+export const config = { path: ["/api/conta", "/api/statistiche", "/api/dove"] };

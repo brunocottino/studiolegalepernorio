@@ -4,10 +4,11 @@
   var $ = function (id) { return document.getElementById(id); };
   var INIZIO = "2026-11-06T17:50:00Z"; // prima di quest'ora: solo prove tecniche
   var IA = ["ChatGPT", "Perplexity", "Gemini", "Claude", "Copilot", "Altre IA"];
-  var CONTATTI = ["chiama", "whatsapp", "modulo", "email"];
+  var CONTATTI = ["chiama", "whatsapp", "modulo", "email", "indicazioni"];
+  var ZONA = "Entro 22 km";
   var PAGINE = "__PAGINE__"; // indirizzi veri del sito, scritti dalla build: servono a scartare gli scanner
   var CONTROLLI = ["/robots.txt", "/sitemap.xml"];
-  var NOMI = { chiama: "Chiama", whatsapp: "WhatsApp", modulo: "Modulo inviato", email: "Email" };
+  var NOMI = { chiama: "Chiama", whatsapp: "WhatsApp", modulo: "Modulo inviato", email: "Email", indicazioni: "Indicazioni stradali" };
   var k = new URLSearchParams(location.hash.slice(1)).get("k") || "";
   try { if (k) localStorage.setItem("slp_k", k); else k = localStorage.getItem("slp_k") || ""; } catch (e) {}
   if (k) history.replaceState(null, "", location.pathname);
@@ -69,6 +70,10 @@
       botCtl: ev.filter(function (x) { return x.e === "bot" && CONTROLLI.indexOf(x.p) !== -1; }),
       botFinti: ev.filter(function (x) { return x.e === "bot" && CONTROLLI.indexOf(x.p) === -1 && !vera(x.p); }),
       locali: ing.filter(locale),
+      conD: ing.filter(function (x) { return x.d; }),
+      zona: ing.filter(function (x) { return x.d === ZONA; }),
+      conZonaC: con.filter(function (x) { return x.d === ZONA; }),
+      indic: con.filter(function (x) { return x.e === "indicazioni"; }),
       conZona: ing.filter(function (x) { return x.z; }),
       ia: ing.filter(function (x) { return IA.indexOf(x.f) !== -1; }),
       google: ing.filter(function (x) { return x.f === "Google" || x.f === "Scheda Google"; }),
@@ -113,6 +118,9 @@
     righe.push("Nel periodo: " + pl(A.ing.length, "visita", "visite") + ", " + A.google.length + " da Google, " + A.ia.length + " dalle IA, " + pl(A.con.length, "contatto", "contatti") +
       (A.ing.length ? " (" + Math.round(A.con.length / A.ing.length * 100) + "% delle visite diventa un contatto)." : "."));
     if (top) righe.push("La fonte principale è <b>" + esc(top[0]) + "</b> con " + top[1] + " visite.");
+    if (A.conD.length) righe.push("<b>Visite entro 22 km dallo Studio: " + A.zona.length + "</b> su " + A.conD.length + " con posizione nota (" + Math.round(A.zona.length / A.conD.length * 100) +
+      "%). Contatti da chi è in zona: <b>" + A.conZonaC.length + "</b>. È l'obiettivo principale.");
+    else righe.push("La distanza dallo Studio viene misurata dalla prossima pubblicazione: il dato apparirà con le visite successive.");
     righe.push("Ingressi sulle pagine locali (materie e comuni): <b>" + A.locali.length + "</b> su " + A.ing.length + ". È il numero che deve crescere: sono le ricerche di chi cerca un avvocato in zona.");
     if (A.conZona.length) {
       var lomb = A.conZona.filter(function (x) { return /^Lombardia/.test(x.z); }).length;
@@ -124,6 +132,9 @@
     $("verdetto").innerHTML = '<span class="label">Il verdetto</span><p class="v-tit">' + tit + "</p><ul><li>" + righe.join("</li><li>") + "</li></ul>";
 
     $("tiles").innerHTML =
+      tile(A.zona.length, "visite entro 22 km dallo Studio", delta(A.zona.length, P.zona.length, completo && P.conD.length > 0)) +
+      tile(A.conZonaC.length, "contatti da chi è entro 22 km", delta(A.conZonaC.length, P.conZonaC.length, completo && P.conD.length > 0)) +
+      tile(A.indic.length, "richieste di indicazioni stradali", delta(A.indic.length, P.indic.length, completo)) +
       tile(A.ing.length, "visite di persone", delta(A.ing.length, P.ing.length, completo)) +
       tile(A.con.length, "contatti dal sito", delta(A.con.length, P.con.length, completo)) +
       tile(A.google.length, "da Google e scheda Google", delta(A.google.length, P.google.length, completo)) +
@@ -170,6 +181,10 @@
     $("pagine").innerHTML = tabella(ordina(conta(A.ing, function (x) { return pag(x.p); })).slice(0, 12), ["Pagina", "Ingressi"], "Nessun ingresso nel periodo.");
     $("pagineContatti").innerHTML = tabella(ordina(conta(A.con, function (x) { return pag(x.p); })), ["Pagina", "Contatti"], "Nessun contatto nel periodo.");
     $("paginaIA").innerHTML = tabella(ordina(conta(A.ia, function (x) { return x.f + " → " + pag(x.p); })), ["IA e pagina d'ingresso", "Visite"], "Nessuna visita da ChatGPT, Gemini, Perplexity, Claude o Copilot nel periodo.");
+    $("fasce").innerHTML = A.conD.length
+      ? tabella(ordina(conta(A.conD, function (x) { return x.d; })), ["Distanza dallo Studio", "Visite"], "—") +
+        tabella(ordina(conta(A.zona, function (x) { return tipo(x.p); })), ["Chi è entro 22 km entra da", "Visite"], "Nessuna visita dalla zona nel periodo.")
+      : '<p class="vuoto">Misurata dalla prossima pubblicazione: ancora nessun dato nel periodo.</p>';
     $("tipi").innerHTML = tabella(ordina(conta(A.ing, function (x) { return tipo(x.p); })), ["Tipo di pagina d'ingresso", "Visite"], "Nessuna visita nel periodo.");
     $("regioni").innerHTML = A.conZona.length
       ? tabella(ordina(conta(A.conZona, function (x) { return x.z; })).slice(0, 10), ["Regione", "Visite"], "—")
