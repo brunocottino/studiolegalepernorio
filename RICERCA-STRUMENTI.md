@@ -167,3 +167,9 @@ Pubblicato in produzione con il permesso di Bruno (deploy 6af5d77dfe1bb5a2278110
 Pubblicato in produzione con il permesso di Bruno (deploy 6afa13a73f1d34b2d1d4c79c): sezioni locali e guide collegate nelle 18 pagine per materia, collegamento dalle guide alle materie, messaggi WhatsApp per pagina, misura per regione e pagina d'ingresso, statistiche con i bot contati solo sulle pagine vere. Controlli sul sito vero: pagine, `/statistiche`, `/api/conta` (registra anche la regione), `/mcp` e nessun errore JavaScript in un browser reale.
 
 Come il 12/11, la build sui server Netlify è stata saltata: ho caricato il sito costruito qui (`dist/` e `functions/`) con un `netlify.toml` temporaneo che come comando ha un `echo`. Il `netlify.toml` del repository non è cambiato. Il problema della build su Netlify resta da capire con il log di un deploy fallito.
+
+## Pubblicazione (20 novembre 2026)
+
+Pubblicato in produzione con il permesso di Bruno (deploy 6b000851f09632738a809f0d): 8 pagine dei comuni entro 22 km, distanze corrette, home con "Di cosa ha bisogno?", messaggio sulla distanza (`/api/dove`), indicazioni stradali, area servita, misura per fascia di distanza. Stesso metodo del 12/11 e del 15/11 (sito costruito qui, `netlify.toml` temporaneo con `echo`).
+
+Dopo la pubblicazione `/api/statistiche` rispondeva 502 ("Invalid time value"): il nome degli eventi veniva letto dopo l'ultima "/", che può comparire nel nome. Corretto leggendo il nome dopo il prefisso del giorno e scartando gli eventi illeggibili; la correzione va pubblicata. Il contatore delle visite (`/api/conta`) ha continuato a registrare.

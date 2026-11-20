@@ -86,15 +86,18 @@ async function statistiche(url) {
   for (let i = giorni - 1; i >= 0; i--) date.push(giorno(new Date(oggi.getTime() - i * 864e5)));
   const out = { giorni, dal: date[0], al: date[date.length - 1], eventi: [] };
   const leggi = async (g) => {
-    const { blobs } = await st.list({ prefix: `ev/${g}/` });
+    const pre = `ev/${g}/`;
+    const { blobs } = await st.list({ prefix: pre });
+    const dec = (x) => { try { return decodeURIComponent(x || ""); } catch { return x || ""; } };
     return Promise.all(blobs.map(async (b) => {
-      const parti = b.key.split("/").pop().split("~");
-      if (parti.length >= 4) {
-        const dec = decodeURIComponent;
-        // dal 15/11/2026 la chiave porta anche regione (z) e pagina d'ingresso (i); le chiavi più vecchie hanno 4 parti
-        return { e: dec(parti[1]), f: dec(parti[2]), p: dec(parti[3]), z: dec(parti[4] || ""), i: dec(parti[5] || ""), d: dec(parti[6] || ""), t: new Date(+parti[0].split("-")[0]).toISOString() };
+      // nome dopo il prefisso del giorno (non dopo l'ultima "/": una pagina può contenerne)
+      const parti = b.key.slice(pre.length).split("~");
+      const ms = parseInt(parti[0], 10);
+      if (parti.length >= 4 && isFinite(ms)) {
+        // dal 15/11/2026 anche regione (z) e pagina d'ingresso (i), dal 19/11 fascia di distanza (d)
+        return { e: dec(parti[1]), f: dec(parti[2]), p: dec(parti[3]), z: dec(parti[4]), i: dec(parti[5]), d: dec(parti[6]), t: new Date(ms).toISOString() };
       }
-      return st.get(b.key, { type: "json" }); // eventi salvati prima del 08/11/2026
+      try { return await st.get(b.key, { type: "json" }); } catch { return null; } // eventi salvati prima del 08/11/2026
     }));
   };
   for (let i = 0; i < date.length; i += 15) {
