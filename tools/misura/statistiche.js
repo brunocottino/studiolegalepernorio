@@ -42,8 +42,10 @@
         return '<tr><td><span class="barra" style="--w:' + Math.round(r[1] / max * 100) + '%"></span>' + esc(r[0]) + '</td><td class="n">' + r[1] + "</td></tr>";
       }).join("") + "</tbody></table>";
   }
-  function delta(ora, prima, completo) {
-    if (!completo) return '<span class="delta fermo">confronto dal ' + data(new Date(Date.parse(INIZIO) + 2 * giorni * 864e5).toISOString()) + "</span>";
+  var INIZIO_DIST = "2026-11-20T10:00:00Z"; // la distanza dallo Studio si misura da questa pubblicazione
+  function delta(ora, prima, completo, dal) {
+    var da = Date.parse(dal || INIZIO) + 2 * giorni * 864e5;
+    if (!completo || da > Date.now()) return '<span class="delta fermo">confronto dal ' + data(new Date(da).toISOString()) + "</span>";
     var d = ora - prima;
     if (d === 0) return '<span class="delta fermo">= come prima (' + prima + ")</span>";
     var pct = prima ? " (" + (d > 0 ? "+" : "") + Math.round(d / prima * 100) + "%)" : "";
@@ -132,9 +134,9 @@
     $("verdetto").innerHTML = '<span class="label">Il verdetto</span><p class="v-tit">' + tit + "</p><ul><li>" + righe.join("</li><li>") + "</li></ul>";
 
     $("tiles").innerHTML =
-      tile(A.zona.length, "visite entro 22 km dallo Studio", delta(A.zona.length, P.zona.length, completo && P.conD.length > 0)) +
-      tile(A.conZonaC.length, "contatti da chi è entro 22 km", delta(A.conZonaC.length, P.conZonaC.length, completo && P.conD.length > 0)) +
-      tile(A.indic.length, "richieste di indicazioni stradali", delta(A.indic.length, P.indic.length, completo)) +
+      tile(A.zona.length, "visite entro 22 km dallo Studio", delta(A.zona.length, P.zona.length, completo, INIZIO_DIST)) +
+      tile(A.conZonaC.length, "contatti da chi è entro 22 km", delta(A.conZonaC.length, P.conZonaC.length, completo, INIZIO_DIST)) +
+      tile(A.indic.length, "richieste di indicazioni stradali", delta(A.indic.length, P.indic.length, completo, INIZIO_DIST)) +
       tile(A.ing.length, "visite di persone", delta(A.ing.length, P.ing.length, completo)) +
       tile(A.con.length, "contatti dal sito", delta(A.con.length, P.con.length, completo)) +
       tile(A.google.length, "da Google e scheda Google", delta(A.google.length, P.google.length, completo)) +
